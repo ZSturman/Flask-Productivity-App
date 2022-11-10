@@ -6,11 +6,11 @@ class Config(object):
     SECRET_KEY = 'f5ae3536d2465afe1fe3bc35138172d1'
 
     ## SQLalchemy db
-    #SQLALCHEMY_DATABASE_URI = 'sqlite:///database.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///database.db'
 
     ## MySQL db
     #               'mysql+pymysql://username:password@localhost/db_name'
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:MxR2epTP@localhost/mapps'
+    """ SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:MxR2epTP@localhost/mapps' """
     
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -104,7 +104,11 @@ def get_icons():
     return icons
 
 def get_icon_list():
-    os.chdir("/Users/zacharysturman/Library/Mobile Documents/com~apple~CloudDocs/miniapps/mapps")
+    os.chdir("../miniapps/mapps")
+    print()
+    print(os.getcwd())
+    print()
+    #os.chdir("/Users/zacharysturman/Library/Mobile Documents/com~apple~CloudDocs/miniapps/mapps")
     with open("icon_list.txt", "r") as f:
         icon_list = f.readlines()
         icon_list = [line.rstrip() for line in icon_list]
