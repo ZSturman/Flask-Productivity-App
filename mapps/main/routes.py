@@ -106,7 +106,7 @@ def home():
         labels = Label.query.filter_by(author=user).all()
         images = Pic.query.filter_by(author=user).all()
         folder_dir="/Icon_Library/sets/all/"
-        user_img_dir = "/images/"+str(user.id)+"/"
+        user_img_dir = "/images/"
         icons = get_icon_list()
         filename_path = "images/icon_svgs/"
 

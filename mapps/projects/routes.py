@@ -123,8 +123,10 @@ def add_image(user, project_item, img):
         random_hex = secrets.token_hex(8)
         _, f_ext = os.path.splitext(img.filename)
         picture_fn = random_hex + f_ext
-        Path("/Users/zacharysturman/Library/Mobile Documents/com~apple~CloudDocs/miniapps/mapps/static/images/", str(user.id)).mkdir(parents=True, exist_ok=True)
-        save_img_path = os.path.join('/Users/zacharysturman/Library/Mobile Documents/com~apple~CloudDocs/miniapps/mapps/static/images/'+str(user.id), picture_fn)
+        Path("./mapps/static/images/")
+        save_img_path = os.path.join('./mapps/static/images/', picture_fn)
+        """ Path("./mapps/static/images/", str(user.id)).mkdir(parents=True, exist_ok=True)
+        save_img_path = os.path.join('./mapps/static/images/'+str(user.id), picture_fn) """
         img.save(save_img_path)
         newImg = Pic(author=user, filename=picture_fn)
         db.session.add(newImg)
