@@ -104,15 +104,14 @@ def get_icons():
     return icons
 
 def get_icon_list():
-    os.chdir("../miniapps/mapps")
-    print()
-    print(os.getcwd())
-    print()
+    os.chdir("./mapps")
     #os.chdir("/Users/zacharysturman/Library/Mobile Documents/com~apple~CloudDocs/miniapps/mapps")
     with open("icon_list.txt", "r") as f:
         icon_list = f.readlines()
         icon_list = [line.rstrip() for line in icon_list]
+        os.chdir("..")
         return icon_list
+    
 
 
 def check_status(today, due_date, total_seconds=None):
