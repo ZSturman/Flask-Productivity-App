@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="display-1 text-center">Lookups</h1>
+
+<div class="container p-5">
+
+        <form action="{{ url_for('lookups.add_lookup') }}" method="POST">
+            <input class="form-control m-1" type="text" name="lookup-item" placeholder="lookup Title">
+
+            <button class="btn btn-primary m-1" type="submit">Save lookup</button>
+
+            <div class="row">
+
+                {% for label in labels %}
+
+                {% set path = label.icon %}
+
+                <div class="col-auto">
+                    <div class="card px-3 mx-5 w-auto" id="label{{ label.id }}" onclick="addLabel('{{ label.id }}')"
+                        style="background-color: {{ label.color }}; cursor: pointer;">
+                        <div class="pt-1 d-inline-flex text-center">
+                            <img src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                            <h6 class="px-1">{{ label.name }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
+
+
+
+
+
+            <div class="row my-1">
+                {% for label in labels %}
+
+
+
+                {% set path = label.icon %}
+                <div class="col-auto d-none" id="lookupLabel{{ label.id }}">
+                    <div class="card px-3 mx-5 w-auto" id="label{{ label.id }}"
+                        style="background-color: {{ label.color }};">
+                        <div class="pt-1 d-inline-flex text-center">
+                            <img src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                            <h6 class="px-1">{{ label.name }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="text" id="lookupLabel{{ label.id }}" value="{{ label.id }}" hidden>
+
+
+
+                {% endfor %}
+            </div>
+
+
+
+        </form>
+
+        <div>
+
+            {% for lookup in lookups|sort(attribute='date_added', reverse=True) %}
+    
+            {% if lookup.complete == False %}
+    
+            <div>
+                <h5><input type="checkbox" class="me-1" onclick="submitForm('{{ lookup.id }}')">{{ lookup.item }}</h5>
+                <!-- {{ lookup.labels }} -->
+            </div>
+    
+            <form id="lookupComplete{{ lookup.id }}" method="POST"
+                action="{{ url_for('lookups.update_lookup', lookup_id = lookup.id) }}" hidden>
+                <input type="checkbox" name="lookup-complete" checked>
+            </form>
+    
+            {% endif %}
+    
+            {% endfor %}
+    
+    
+            {% for lookup in lookups|sort(attribute='date_added', reverse=True) %}
+    
+    
+    
+            {% if lookup.complete == True %}
+    
+    
+    
+    
+            <div>
+                <h5 class="text-decoration-line-through"><input type="checkbox" class="me-1" checked
+                        disabled>{{ lookup.item }}</h5>
+            </div>
+    
+    
+            {% endif %}
+    
+    
+            {% endfor %}
+        </div>
+</div>
+
+<script>
+    function addLabel(id) {
+        var selLabel = document.getElementById("label" + id);
+        var lookupLabel = document.getElementById("lookupLabel" + id);
+        var lookupLabels = document.getElementById("lookupLabels");
+
+        selLabel.classList.add("d-none");
+        lookupLabel.classList.remove("d-none");
+
+        lookupLabels.value = id
+        lookupLabels.placeholder = id
+
+    }
+
+    function submitForm(id) {
+        var lookupItem = document.getElementById('lookupComplete' + id)
+
+        lookupItem.submit()
+
+
+    }
+</script>
+
+
+
+{% endblock content %}

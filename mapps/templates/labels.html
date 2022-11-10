@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="display-5 text-center">Labels</h1>
+
+
+
+<div class="row mx-5 px-5">
+    <div class="col-auto overflow-scroll p-2 m-2 border border-1 rounded-2 bg-light">
+        <div>
+            {% for label in labels %}
+            {% set path = label.icon %}
+            <div class="icon-width px-2 m-2 rounded-5" style="background-color: {{ label.color }};">
+                <div class="pt-1 d-inline-flex text-center ">
+                    <form action="{{ url_for('labels.delete_label', label_id = label.id) }}" method="POST" role="form">
+                        <button type="submit" data-bs-toggle="modal" data-bs-target="#delete-label{{ label.id }}"
+                            id="delete-label-item{{ label.id }}" class="border-0 bg-transparent mx-1"
+                            style="cursor: pointer;"><i class="fa-solid fa-circle-xmark opacity-50"></i></button>
+                    </form>
+                    <img src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                    <h6 class="px-1 text-nowrap">{{ label.name }}</h6>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+
+
+
+
+    <div class="col">
+        <form action="{{ url_for('labels.add_label') }}" method="POST">
+            <div class="form-control">
+                <div class="row text-center mb-5">
+                    <h5>Add a new Label</h5>
+                </div>
+                <div>
+                    <div class="text-center">
+                        <small onclick="editColorAndIcon()" style="cursor: pointer;"><em>Click to change icon and/or
+                                color</em></small>
+                    </div>
+                    {% set randIcon = get_random_icon() %}
+                    {% set randColor = getRandomColor() %}
+                    <div class="icon-width px-2 ps-3 m-2 rounded-5 w-50 mx-auto"
+                        style="background-color: {{ randColor }}; cursor: pointer;" onclick="editColorAndIcon()"
+                        id="newLabel">
+                        <div class="pt-1 d-inline-flex text-center">
+                            <img id="displayedIcon" class="my-1 py-1"
+                                src="{{ url_for('static', filename=folder_dir+randIcon) }}" width="40" height="40">
+                            <input class="form-control bg-transparent border-0" name="labelName"
+                                placeholder="Label name goes here...">
+                        </div>
+                    </div>
+                    <input type="text" name="labelIcon" id="iconInput" value="{{ randIcon }}" hidden>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-4 text-center d-none" id="labelColor">
+                        <input name="labelColor" type="color" class="form-control form-control-color" id="newLabelColor"
+                            value="{{ randColor }}"
+                            onclick="addCustomColor('{{ randColor }}'); console.log('{{ randColor }}')"
+                            title="Choose main color">
+                    </div>
+
+                    <div class="col order-first">
+                        <div class="border borde-3 overflow-scroll d-none" id="iconLibrary">
+                            <p id="iconsList">{{ icons|tojson }}</p>
+                            {% for icon in icons %}
+                            <p id="iconTest" hidden>{{ icon|tojson }}</p>
+                            <button class="btn btn-transparent" value="{{ icon }}" id="clickedIcon" type="button"
+                                onclick="getIconData('{{ icon }}')">
+                                <img class="m-1" src="{{ url_for('static', filename=folder_dir+icon) }}" width="25"
+                                    height="25">
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row px-3 mx-auto">
+                    <button class="btn btn-primary my-2 w-auto" type="submit">Save</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<p>On mouse over - reveal button to delete in one corner and a button to edit in the other</p>
+
+<script>
+    function changeImage(filename) {
+        let displayedIcon = document.getElementById("displayedIcon");
+        let srcForImg = document.getElementById("srcForImg");
+
+        console.log("srcForImg.innerText", srcForImg.innerText)
+
+        new_icon = srcForImg.innerText + filename
+
+        displayedIcon.setAttribute("src", )
+
+
+
+    }
+
+
+    function getIconData(icon, icons) {
+        var iconInput = document.getElementById("iconInput");
+        var displayedIcon = document.getElementById("displayedIcon");
+
+        var iconsList = document.getElementById("iconsList")
+        console.log("iconsList", iconsList)
+
+        if (icon in iconsList) {
+            console.log("yes", icon)
+        } else {
+            console.log("no")
+        }
+
+        console.log(icon)
+
+        iconInput.value = icon
+
+
+
+
+
+
+        /* change randIcon to clicked icon...? */
+    };
+
+
+    function editColorAndIcon() {
+        var iconLibrary = document.getElementById("iconLibrary");
+        var labelColor = document.getElementById("labelColor");
+
+        iconLibrary.classList.remove("d-none");
+        labelColor.classList.remove("d-none");
+    }
+
+
+    function addCustomColor() {
+
+        var r = document.querySelector(':root');
+
+        var colorpicker = document.getElementById('newLabelColor');
+        var newLabel = document.getElementById("newLabel");
+
+        setInterval(() => {
+            let color = colorpicker.value;
+
+            newLabel.style.backgroundColor = color;
+
+        }, 200);
+    }
+</script>
+
+
+{% endblock content %}

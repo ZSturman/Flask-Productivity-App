@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="display-1 text-center">Notes</h1>
+
+<div class="row">
+
+
+    <div class="col-3">
+
+        {% for note in notes %}
+        <div class="row">
+            <div class="card">
+                <div class="card-header"><small><em>{{ note.date_added }}</em></small></div>
+                <h5>{{ note.title }}</h5>
+                <p>{{ note.content }}</p>
+                {{ note.labels }}
+            </div>
+
+            <button data-bs-toggle="modal" data-bs-target="#delete-note{{ note.id }}" id="delete-note-item{{ note.id }}"
+                class="border-0 bg-transparent mx-1"><i class="fa-solid fa-circle-xmark opacity-50"></i></button>
+        </div>
+
+
+
+
+
+        <form action="{{ url_for('notes.delete_note', note_id = note.id) }}" method="POST" role="form">
+            <div class="modal fade" id="delete-note{{ note.id }}" tabindex="-1"
+                aria-noteledby="delete-note{{ note.id }}note" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="delete-note{{ note.id }}note">Are you sure you want to delete
+                                {{ note.id }} ?</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-note="Close"></button>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+
+
+
+        {% endfor %}
+    </div>
+
+    <div class="col">
+        <form action="{{ url_for('notes.add_note') }}" method="POST">
+            <input class="form-control m-1" type="text" name="noteTitle" placeholder="Note Title">
+
+            <div class="row">
+
+                {% for label in labels %}
+
+                {% set path = label.icon %}
+
+                <div class="col-auto">
+                    <div class="card px-3 mx-5 w-auto" id="label{{ label.id }}" onclick="addLabel('{{ label.id }}')"
+                        style="background-color: {{ label.color }}; cursor: pointer;">
+                        <div class="pt-1 d-inline-flex text-center">
+                            <img src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                            <h6 class="px-1">{{ label.name }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
+
+            
+
+
+
+            <div class="row my-1">
+                {% for label in labels %}
+
+                
+
+                {% set path = label.icon %}
+                <div class="col-auto d-none" id="noteLabel{{ label.id }}">
+                    <div class="card px-3 mx-5 w-auto" id="label{{ label.id }}"
+                        style="background-color: {{ label.color }};">
+                        <div class="pt-1 d-inline-flex text-center">
+                            <img src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                            <h6 class="px-1">{{ label.name }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="text" id="noteLabel{{ label.id }}" value="{{ label.id }}" hidden>
+
+
+                {% endfor %}
+            </div>
+
+            {% set noteLabels = [1] %}
+
+            
+            <input id="noteLabels" name="noteabels" value="{{ noteLabels }}" placeholder="">
+
+            <textarea class="form-control m-1" name="noteContent" cols="30" rows="10"></textarea>
+
+            <button class="btn btn-primary m-1" type="submit">Save Note</button>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    function addLabel(id) {
+        var selLabel = document.getElementById("label" + id);
+        var noteLabel = document.getElementById("noteLabel" + id);
+        var noteLabels = document.getElementById("noteLabels");
+
+        selLabel.classList.add("d-none");
+        noteLabel.classList.remove("d-none");
+
+        noteLabels.value = id
+        noteLabels.placeholder = id
+
+    }
+</script>
+
+
+
+{% endblock content %}

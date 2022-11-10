@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container"> 
+    <div class="my-5">
+
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="form-control mb-3">
+                <div class="display-5 fw-light">Reset Password</div>
+                <hr class="mx-1">
+                <div class="mt-2">
+                    {{ form.password.label(class="form-label") }}
+                    {% if form.password.errors %}
+                    {{ form.password(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.password.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.password(class="form-control") }}
+                    {% endif %}
+                </div>
+                <div class="mt-2">
+                    {{ form.confirm_password.label(class="form-label") }}
+                    {% if form.confirm_password.errors %}
+                    {{ form.confirm_password(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.confirm_password.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.confirm_password(class="form-control") }}
+                    {% endif %}
+                </div>
+                <div class="my-2 form-group">
+                    {{ form.submit(class="btn btn-outline-info") }} 
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+
+{% endblock content %}
+

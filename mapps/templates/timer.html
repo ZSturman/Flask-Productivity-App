@@ -1,0 +1,494 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="display-1 text-center">Timer</h1>
+
+<div class="row">
+    {% for project in projects %}
+
+    <div class="col">
+        {{ project.title }}
+    </div>
+
+    {% endfor  %}
+</div>
+
+
+
+
+
+        <div class="row">
+            {% for project in projects %}
+            <div class="col bg-secondary m-0 p-0">
+                <div class="border border-3 p-3 text-center position-relative">
+                    <h3 class="position-absolute top-0 start-0 m-2 text-light">{{ project.title }}</h3>
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#delete-project{{ project.id }}"
+                        id="delete-project-item{{ project.id }}"
+                        class="border-0 bg-transparent position-absolute top-0 end-0 m-2"><i
+                            class="fa-solid fa-trash text-light"></i></button>
+                    <div class="row mt-5">
+                        <div class="col border border-2 bg-light mx-1 position-relative">
+
+                            <button class="border-0 bg-transparent position-absolute top-0 start-0"
+                                onclick="editGoal('{{ project.id }}')"><i
+                                    class="fa-regular fa-pen-to-square"></i></button>
+
+
+                            <h5>Goal:</h5>
+
+                            {% set gt_seconds = convert_time(project.goal_time)[0] %}
+                            {% set gt_minutes = convert_time(project.goal_time)[1] %}
+                            {% set gt_hours = convert_time(project.goal_time)[2] %}
+
+                            {% if project.goal_time == 0 %}
+
+
+                            <button class="text-muted border-0 bg-transparent" onclick="editGoal('{{ project.id }}')"><em>add a goal</em></button>
+
+                            {% else %}
+                            <div id="goalToHit{{ project.id }}">
+
+                                {% if gt_hours %}
+                                {% if  ((gt_hours == 0) or (gt_hours == None))  %}
+
+                                <p>gt_hours = none or 0</p>
+                                
+                                {% else %}
+                                <span>{{gt_hours}} <small><em>hours</em></small></span>
+                                {% endif %}
+                                <br>
+                                {% endif %}
+
+                                {% if gt_minutes %}
+                                {% if ((gt_minutes == 0) and (gt_minutes == 0))  %}
+
+                                <p>gt_minutes = none or 0</p>
+                               
+                                {% elif gt_minutes < 10 %}
+                                <span>0{{gt_minutes}} <small><em>minutes</em></small></span>
+                                {% else %}
+                                <span>{{gt_minutes}} <small><em>minutes</em></small></span>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            <small id="goalper{{ project.id }}" class="text-muted">per {{ project.goal_per }}</small>
+
+                            {% endif %}
+
+                        </div>
+                        <div class="col border border-2 bg-light mx-1">
+                            <h5>Last Session</h5>
+                            <div id="last_session{{ project.id }}">
+
+                                {% if project.last_session %}
+
+                                {% set ls_seconds = convert_time(project.last_session)[0] %}
+                                {% set ls_minutes = convert_time(project.last_session)[1] %}
+                                {% set ls_hours = convert_time(project.last_session)[2] %}
+
+                                {% if ls_hours < 10 %}
+                                <span>0{{ ls_hours }}</span>
+                                {% else %}
+                                <span>{{ ls_hours }}</span>
+                                {% endif %}
+
+                                <span>:</span>
+
+                                {% if ls_minutes < 10 %}
+                                <span>0{{ ls_minutes }}</span>
+                                {% else %}
+                                <span>{{ ls_minutes }}</span>
+                                {% endif %}
+
+                                <span>:</span>
+
+                                {% if ls_seconds < 10 %}
+                                <span>0{{ ls_seconds }}</span>
+                                {% else %}
+                                <span>{{ ls_seconds }}</span>
+                                {% endif %}
+
+                                {% endif %}
+
+
+
+
+                            </div>
+                        </div>
+                        <div class="col border border-2 bg-light mx-1">
+                            <h5>Time remaining</h5>
+                            <div id="fromGoal{{ project.id }}">
+
+                                {% if not project.goal_time %}
+                                <button class="text-muted border-0 bg-transparent" onclick="editGoal('{{ project.id }}')"><em>To see remaining time, add a goal</em></button>
+
+                                {% else %}
+
+
+                                
+
+                                {% set total_seconds = project.sessions | sum(attribute='seconds') %}
+
+
+                                {% set seconds_remaining = project.goal_time - total_seconds %}
+
+                                {% if ((seconds_remaining <= 0) and (project.goal_time > 0)) %}
+
+                                <h1>Goal Achieved</h1>
+
+                                {% else %}
+
+                                {% set remaining_seconds = convert_time(seconds_remaining)[0] %}
+                                {% set remaining_minutes = convert_time(seconds_remaining)[1] %}
+                                {% set remaining_hours = convert_time(seconds_remaining)[2] %}
+
+
+                                {% if remaining_hours %}
+                                {% if  ((remaining_hours == 0) or (remaining_hours == None))  %}
+                                
+                                {% else %}
+                                <span>{{remaining_hours}} <small><em>hours</em></small></span>
+                                {% endif %}
+                                <br>
+                                {% endif %}
+
+                                {% if remaining_minutes %}
+                                {% if ((remaining_minutes == 0) and (remaining_minutes == 0))  %}
+                                
+                                {% elif remaining_minutes < 10 %}
+                                <span>0{{remaining_minutes}} <small><em>minutes</em></small></span>
+                                {% else %}
+                                <span>{{remaining_minutes}} <small><em>minutes</em></small></span>
+                                {% endif %}
+                                <br>
+                                {% endif %}
+
+                                {% if remaining_seconds %}
+                                {% if ((remaining_seconds == 0) and (remaining_seconds == 0))  %}
+                                
+                                {% elif remaining_seconds < 10 %}
+                                <span>0{{remaining_seconds}} <small><em>seconds</em></small></span>
+                                {% else %}
+                                <span>{{remaining_seconds}} <small><em>seconds</em></small></span>
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="timer-form{{ project.id }}"
+                        action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+
+                        <div id="goalInputSection{{ project.id }}" class="text-center d-none">
+                            <br>
+                            <p>Goal Input</p>
+
+                            <select name="goal-per" id="perSelect{{ project.id }}" class="form-select w-50 mx-auto"
+                                aria-label="Default select example" onchange="timePer(this, '{{ project.id }}')">
+                                <option value="0">How often do you want to work on this?</option>
+                                <option value="day">Daily</option>
+                                <option value="week">Weekly</option>
+                                <option value="month">Monthly</option>
+                            </select>
+
+                            <input name="goal-time" type="range" class="form-range m-2 d-none w-75" min="1"
+                                id="inputGoal{{ project.id }}" oninput="showGoal('{{ project.id }}')">
+
+                            <div id="goal{{ project.id }}" class="my-2 h3">
+                            </div>
+
+                            <div id="goalControls{{ project.id }}" class="btn-group my-2 d-none">
+                                <button class="mx-1 btn btn-primary" id="saveGoal{{ project.id }}"
+                                    onclick="saveGoal('{{ project.id }}')">Save</button>
+                            </div>
+                        </div>
+
+                    </form>
+
+
+
+                    <form id="timer-form{{ project.id }}"
+                        action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+
+
+                        <div class="border bg-light w-50 text-center mx-auto my-4">
+                            <p>Timer</p>
+
+                            <div name="last-session" id="time{{ project.id }}" class="my-2 h3">
+                                {% if project.last_session == None %}
+                                00:00:00
+                                {% else %}
+
+                                {% if project.last_session %}
+
+                                {% set ls_seconds = convert_time(project.last_session)[0] %}
+                                {% set ls_minutes = convert_time(project.last_session)[1] %}
+                                {% set ls_hours = convert_time(project.last_session)[2] %}
+
+                                {% if ls_hours < 10 %}
+                                <span>0{{ ls_hours }}</span>
+                                {% else %}
+                                <span>{{ ls_hours }}</span>
+                                {% endif %}
+
+                                <span>:</span>
+
+                                {% if ls_minutes < 10 %}
+                                <span>0{{ ls_minutes }}</span>
+                                {% else %}
+                                <span>{{ ls_minutes }}</span>
+                                {% endif %}
+
+                                <span>:</span>
+
+                                {% if ls_seconds < 10 %}
+                                <span>0{{ ls_seconds }}</span>
+                                {% else %}
+                                <span>{{ ls_seconds }}</span>
+                                {% endif %}
+
+                                {% endif %}
+                                {% endif %}
+
+
+                            </div>
+
+                            <textarea name="last-session" id="hidden-value{{ project.id }}" hidden></textarea>
+
+                            <div id="controls">
+                                <button class="mx-1 btn btn-primary" id="start{{ project.id }}"
+                                    onclick="start('{{ project.id }}')">Start</button>
+                                <button class="mx-1 btn btn-info d-none" id="stop{{ project.id }}"
+                                    type="submit">Stop</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="row">
+                        <div class="col border border-2 bg-light mx-1">
+                            <h5>Sessions</h5>
+                            <div id="sessions{{ project.id }}">
+
+                                {% for session in project.sessions %}
+
+                                {% if session.seconds == None %}
+                                {% else %}
+                                <div class="row">
+                                    <div class="col">
+                                        <p>{{ session.date }} :</p>
+
+                                        {% set date = wkd_mon_dd_yyy_local(session.date) %}
+                                        {{date}}
+                                    </div>
+                                    <div class="col">
+                                        <p>{{ session.seconds }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <div class="row">
+                                <div class="col">
+                                    <p><b>Total :</b></p>
+                                </div>
+                                <div class="col">
+
+                                    <p>{{ project.sessions | sum(attribute='seconds') }}</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <form action="{{ url_for('projects.delete_project', project_id = project.id) }}" method="POST" role="form">
+                <div class="modal fade" id="delete-project{{ project.id }}" tabindex="-1"
+                    aria-labelledby="delete-project{{ project.id }}Label" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="delete-project{{ project.id }}Label">Are you sure you want
+                                    to delete
+                                    {{ project.title }} ?</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            {% endfor %}
+        </div>
+    </div>
+
+
+    </div>
+
+    <script src="https://kit.fontawesome.com/94b6904e8a.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+
+    <script>
+        function editGoal(id) {
+            var goalInputSection = document.getElementById("goalInputSection" + id);
+
+            if (goalInputSection.classList.contains("d-none")) {
+                goalInputSection.classList.remove("d-none")
+            }
+
+
+        }
+
+
+        function saveGoal(id) {
+            var goalInputSection = document.getElementById("goalInputSection" + id)
+            var goal = document.getElementById("goal" + id)
+            var goalToHit = document.getElementById("goalToHit" + id)
+            var perSelect = document.getElementById("perSelect" + id)
+            var goalPer = document.getElementById("goalper" + id)
+
+            goalPer.innerHTML = "per " + perSelect.value;
+
+            goalToHit.innerHTML = goal.innerHTML
+
+            goalInputSection.classList.add("d-none")
+        }
+
+
+        function timePer(elem, id) {
+            console.log(elem.value)
+
+            var inputGoal = document.getElementById("inputGoal" + id)
+            var goalElem = document.getElementById("goal" + id)
+            var saveGoalBtn = document.getElementById("goalControls" + id)
+
+            if (elem.value == "day") {
+                if (inputGoal.value > 43201) {
+                    goalElem.innerText = `12:00:00`;
+                }
+                inputGoal.classList.remove("d-none");
+                saveGoalBtn.classList.remove("d-none");
+                inputGoal.max = 43201;
+                inputGoal.step = 900;
+            }
+            if (elem.value == "week") {
+                if (inputGoal.value > 216001) {
+                    goalElem.innerText = `60:00:00`;
+                }
+                saveGoalBtn.classList.remove("d-none");
+                inputGoal.classList.remove("d-none");
+                inputGoal.max = 216001;
+                inputGoal.step = 1800;
+            }
+            if (elem.value == "month") {
+                saveGoalBtn.classList.remove("d-none");
+                inputGoal.classList.remove("d-none");
+                inputGoal.max = 576001;
+                inputGoal.step = 3600;
+            }
+            if (elem.value == 0) {
+                inputGoal.classList.add("d-none");
+                saveGoalBtn.classList.add("d-none");
+            }
+        }
+
+
+        function showGoal(id) {
+            var inputGoal = document.getElementById("inputGoal" + id)
+            var perSelect = document.getElementById("perSelect" + id)
+            var goalElem = document.getElementById("goal" + id)
+
+            console.log(inputGoal.value)
+
+            let hrs = Math.floor(inputGoal.value / 3600);
+            let mins = Math.floor((inputGoal.value - (hrs * 3600)) / 60);
+            let secs = inputGoal.value % 60;
+
+            if (secs < 10) secs = '0' + secs;
+            if (mins < 10) mins = '0' + mins;
+            if (hrs < 10) hrs = '0' + hrs;
+
+
+            goalElem.innerText = `${hrs}:${mins}:00`;
+            goalToHit = `${hrs}:${mins}:${secs}`;
+        }
+
+
+
+
+
+        function start(id) {
+
+            var timeElem = document.getElementById("time" + id);
+            var startBtn = document.getElementById("start" + id);
+            var stopBtn = document.getElementById("stop" + id);
+            var last_session = document.getElementById("last_session" + id);
+
+            var timerTextArea = document.getElementById("hidden-value" + id)
+
+            startBtn.classList.add("d-none")
+            stopBtn.classList.remove("d-none")
+
+            let seconds = 0;
+            let interval = null;
+
+            function timer() {
+                seconds++;
+
+                let hrs = Math.floor(seconds / 3600);
+                let mins = Math.floor((seconds - (hrs * 3600)) / 60);
+                let secs = seconds % 60;
+
+                if (secs < 10) secs = '0' + secs;
+                if (mins < 10) mins = '0' + mins;
+                if (hrs < 10) hrs = '0' + hrs;
+
+                timeElem.innerText = `${hrs}:${mins}:${secs}`;
+                timeElem.value = seconds
+
+                timerTextArea.value = seconds
+            }
+
+
+            if (interval) {
+                return
+            }
+            interval = setInterval(timer, 1000);
+
+            function stop(id) {
+                clearInterval(interval);
+                interval = null;
+                last_session.innerText = timeElem.innerText
+                var timerForm = document.getElementById("timer-form" + id)
+                startBtn.classList.remove("d-none")
+                stopBtn.classList.add("d-none")
+            }
+
+            event.preventDefault()
+
+            stopBtn.addEventListener('click', stop)
+        }
+    </script>
+
+
+
+
+
+
+
+
+
+{% endblock content %}

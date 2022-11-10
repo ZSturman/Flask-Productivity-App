@@ -1,0 +1,2867 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- Startup stuff -->
+<div>
+
+  <!-- Deleted project list -->
+  {% for project in deleted_projects|sort(attribute='date_updated') %}
+  {% endfor %}
+
+  <!-- completed projects list -->
+  {% for project in completed_projects|sort(attribute='date_updated') %}
+  {% endfor %}
+
+  {% if active_projects|count >= 0 %}
+  {% set x = (active_projects|sort(attribute='date_updated', reverse=True))  %}
+  {% for proj in x %}
+  {% if proj == (x|first) %}
+  <div id="recentUpdProj-id" hidden>{{ proj.id }}</div>
+  <div id="recentUpdProj-ls" hidden>{{ proj.last_sess }}</div>
+  <div id="recentUpdProj-d_updated" hidden>{{ proj.date_updated }}</div>
+  <div id="recentUpdProj-title" hidden>{{ proj.title }}</div>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+
+
+  <button type="button" data-bs-toggle="modal" data-bs-target="#newprojectmodal"
+    class="add-proj-floating-btn btn btn-info m-5"><i class="fa-solid fa-plus"></i></button>
+
+  <!-- make most recent proj selected proj -->
+  {% if all_projects|count == 0 %}
+  <div id="recentUpdProj-id" hidden></div>
+  {% set authorized = "disabled" %}
+
+  {% else %}
+
+  {% set authorized = "" %}
+  {% endif %}
+
+</div>
+
+
+
+
+<!-- All Modals -->
+<div>
+
+  <!-- New Proj Modal -->
+  <div class="modal fade" id="newprojectmodal" tabindex="-1" aria-labelledby="newprojectmodal" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+
+      <form action="{{ url_for('projects.add_project') }}" method="POST" enctype="multipart/form-data">
+        <input id="add-title" name="add-title" type="text" class="form-control" placeholder="Enter Project title..."
+          value="Project {{ projects|length+1 }}" hidden>
+
+        <div class="modal-content container-md">
+          <div class="modal-header">
+            <h1 class="modal-label fs-5 text-muted">Project {{ all_projects|length+1 }}
+            </h1>
+
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+          </div>
+          <div class="modal-body mb-5 align-self-center w-100">
+
+            <div class="form-control border-0 px-5">
+
+
+              <!-- TITLE and Labels -->
+              <div>
+
+                <div class="mb-3">
+                  <label for="projectTitle" class="form-label text-muted h5">Project title</label>
+                  <input name="new_title" type="text" class="form-control" id="projectTitle"
+                    placeholder="Enter Project title..." value="Project {{ projects|length+1 }}">
+                </div>
+
+                <hr>
+
+
+
+                <!-- DESCRIPTION -->
+                <div>
+                  <label for="description" class="form-label text-muted h5">Description</label>
+                  <textarea class="form-control rounded-2" rows="6" name="description" id="description"></textarea>
+                </div>
+
+
+
+
+
+
+                <hr>
+
+              </div>
+
+
+              <!-- OVERVIEW -->
+              <div class="d-flex flex-column flex-lg-row gap-3 justify-content-around">
+
+                <!-- PRIORITY -->
+                <div id="project-priority" aria-labelledby="project-priority">
+                  <h5 class="h5 text-muted">Priority: </h5>
+                  <div>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="priority" value="None"
+                      id="project-priority-none" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary mx-auto my-1 py-1" for="project-priority-none">None</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto" name="priority" value="Low" id="project-priority-low"
+                      autocomplete="off">
+                    <label class="btn btn-outline-success mx-auto my-1 py-1" for="project-priority-low">Low</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="priority" value="Medium"
+                      id="project-priority-medium" autocomplete="off">
+                    <label class="btn btn-outline-info mx-auto my-1 py-1" for="project-priority-medium">Medium</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="priority" value="High"
+                      id="project-priority-high" autocomplete="off">
+                    <label class="btn btn-outline-warning mx-auto my-1 py-1" for="project-priority-high">High</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="priority" value="Urgent"
+                      id="project-priority-urgent" autocomplete="off">
+                    <label class="btn btn-outline-danger mx-auto my-1 py-1" for="project-priority-urgent">Urgent</label>
+                    <br>
+
+
+                  </div>
+                </div>
+
+                <!-- DUE DATE -->
+                <div id="project-due-date" aria-labelledby="project-due-date">
+                  <h5 class="h5 text-muted">Due Date: </h5>
+                  <div>
+                    <input class="form-control w-100 mx-auto" onchange="showChange(this)" type="date"
+                      name="new_proj_due_date">
+                    <input class="form-control d-none w-100 mx-auto" type="time" name="new_proj_due_date_time">
+                  </div>
+                </div>
+
+                <!-- PRODUCTIVITY GOAL -->
+
+                <div id="project-productivity" aria-labelledby="project-productivity">
+                  <h5 class="h5 text-muted">Productivity Goal: </h5>
+                  <div>
+                    <div id="project-productivity" aria-labelledby="project-productivity">
+
+
+                      <label for="perSelect" class="text-muted ">Frequency</label>
+
+                      <div id="project-goalrange" class="d-none">
+                        <div id="goalElem" class="h5 text-center p-0 m-0">
+
+                        </div>
+                        <input name="goal-time" type="range" class="form-range m-2 mt-0" min="1" id="inputGoal"
+                          oninput="showGoal(this)">
+
+                        <label for="perSelect" id="project-goalperlabel" class="text-muted">Per</label>
+                      </div>
+
+                      <select name="goal-per" id="perSelect" class="form-select mx-auto" aria-label="Frequency select"
+                        onchange="timePer(this)">
+                        <option value="0">None</option>
+                        <option value="day">Daily</option>
+                        <option value="week">Weekly</option>
+                        <option value="month">Monthly</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+
+              <hr>
+
+
+
+              <!-- TASKS -->
+
+              <h5 class="h5 text-muted">Tasks:</h5>
+              <div class="p-2">
+
+                <button type="button" data-bs-toggle="modal" data-bs-target="#addTaskModal"
+                  class="btn btn-sm btn-outline-info mx-1 rounded-3">+ Add Task</button>
+
+
+                <ul id="newProjTasks">
+                  {% for task in tasks %}
+
+                  {% endfor %}
+                </ul>
+              </div>
+
+              <input name="numProjTasks" id="numProjTasks" type="number" value="0" hidden>
+              <hr>
+
+
+              <!-- Customize -->
+
+              <h5 class="h5 text-muted">Customize:</h5>
+              <div class="p-2">
+
+                <div class="text-center my-auto">
+                  <input name="projColor" type="color" class="form-control form-control-color" id="customProjColor"
+                    title="Choose main color" value="#6C757D">
+                </div>
+
+
+              </div>
+
+              <hr>
+
+
+            </div>
+          </div>
+
+          <div class="modal-fixed-bottom">
+            <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+
+  <!-- New Task Modal -->
+  <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskLabel" aria-hidden="true"
+    data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+      <form id="newTaskNoProjForm" role="form" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="addTask">Add Task</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body mb-5 align-self-center w-100">
+            <div class="form-control border-0 px-5">
+              <!-- TITLE and Labels -->
+              <div>
+                <div class="mb-3">
+                  <label for="taskTitle" class="form-label text-muted h5">Task title</label>
+                  <input name="newTaskTitle" type="text" class="form-control" id="taskTitle"
+                    placeholder="Enter Project title...">
+                </div>
+                <!-- DESCRIPTION -->
+                <div>
+                  <label for="description" class="form-label text-muted h5">Description</label>
+                  <textarea class="form-control rounded-2" rows="3" name="newTaskDescription"
+                    id="description"></textarea>
+                </div>
+                <hr>
+              </div>
+
+              <!-- OVERVIEW -->
+              <div class="d-flex flex-column flex-lg-row gap-3 justify-content-around">
+
+                <!-- PRIORITY -->
+                <div id="task-priority" aria-labelledby="task-priority">
+                  <h5 class="h5 text-muted">Priority: </h5>
+                  <div>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="newTaskPriority" value="None"
+                      id="task-priority-none" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary mx-auto my-1 py-1" for="task-priority-none">None</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto" name="newTaskPriority" value="Low"
+                      id="task-priority-low" autocomplete="off">
+                    <label class="btn btn-outline-success mx-auto my-1 py-1" for="task-priority-low">Low</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="newTaskPriority" value="Medium"
+                      id="task-priority-medium" autocomplete="off">
+                    <label class="btn btn-outline-info mx-auto my-1 py-1" for="task-priority-medium">Medium</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="newTaskPriority" value="High"
+                      id="task-priority-high" autocomplete="off">
+                    <label class="btn btn-outline-warning mx-auto my-1 py-1" for="task-priority-high">High</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="newTaskPriority" value="Urgent"
+                      id="task-priority-urgent" autocomplete="off">
+                    <label class="btn btn-outline-danger mx-auto my-1 py-1" for="task-priority-urgent">Urgent</label>
+                    <br>
+
+
+                  </div>
+                </div>
+
+                <!-- DUE DATE -->
+                <div id="task-due-date" aria-labelledby="task-due-date">
+                  <h5 class="h5 text-muted">Due Date: </h5>
+                  <div>
+                    <input class="form-control w-100 mx-auto" onchange="showChange(this)" type="date"
+                      name="new_task_due_date">
+                    <input class="form-control d-none w-100 mx-auto" type="time" name="new_task_due_date_time">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+              data-bs-target="#newprojectmodal">Close</button>
+            <button onclick="addTaskNoProject()" type="button" class="btn btn-primary" data-bs-toggle="modal"
+              data-bs-target="#newprojectmodal">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  {% for project in all_projects|sort(attribute='date_updated') %}
+
+  <!-- New Task Modal from Existing Project -->
+  <div class="modal fade" id="addTaskModalFromProj{{ project.id }}" tabindex="-1" aria-labelledby="addTaskLabel"
+    aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+      <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="addTask">Add Task</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <input name="add-task" hidden type="text" value="new task">
+          </div>
+          <div class="modal-body mb-5 align-self-center w-100">
+            <div class="form-control border-0 px-5">
+              <!-- TITLE and Labels -->
+              <div>
+                <div class="mb-3">
+                  <label for="taskTitle" class="form-label text-muted h5">Task title</label>
+                  <input name="taskTitle" type="text" class="form-control" id="taskTitle"
+                    placeholder="Enter Project title...">
+                </div>
+                <!-- DESCRIPTION -->
+                <div>
+                  <label for="description" class="form-label text-muted h5">Description</label>
+                  <textarea class="form-control rounded-2" rows="3" name="taskDescription" id="description"></textarea>
+                </div>
+                <hr>
+              </div>
+
+              <!-- OVERVIEW -->
+              <div class="d-flex flex-column flex-lg-row gap-3 justify-content-around">
+
+
+
+                <!-- PRIORITY -->
+                <div id="task-priority" aria-labelledby="task-priority">
+                  <h5 class="h5 text-muted">Priority: </h5>
+                  <div>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="taskPriority" value="None"
+                      id="pri-None-{{ project.id }}">
+                    <label class="btn btn-outline-secondary mx-auto my-1 py-1"
+                      for="pri-None-{{ project.id }}">None</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto" name="taskPriority" value="Low"
+                      id="pri-low-{{ project.id }}" autocomplete="off">
+                    <label class="btn btn-outline-success mx-auto my-1 py-1" for="pri-low-{{ project.id }}">Low</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="taskPriority" value="Medium"
+                      id="pri-med-{{ project.id }}">
+                    <label class="btn btn-outline-info mx-auto my-1 py-1" for="pri-med-{{ project.id }}">Medium</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="taskPriority" value="High"
+                      id="pri-high-{{ project.id }}" autocomplete="off">
+                    <label class="btn btn-outline-warning mx-auto my-1 py-1"
+                      for="pri-high-{{ project.id }}">High</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="taskPriority" value="Urgent"
+                      id="task-priority-urgent-{{ project.id }}" autocomplete="off">
+                    <label class="btn btn-outline-danger mx-auto my-1 py-1"
+                      for="task-priority-urgent-{{ project.id }}">Urgent</label>
+                    <br>
+
+
+                  </div>
+                </div>
+
+                <!-- DUE DATE -->
+                <div id="task-due-date" aria-labelledby="task-due-date">
+                  <h5 class="h5 text-muted">Due Date: </h5>
+                  <div>
+                    <input class="form-control w-100 mx-auto" onchange="showChange(this)" type="date"
+                      name="taskDueDate">
+                    <input class="form-control d-none w-100 mx-auto" type="time" name="taskDueDateTime">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- EDIT PROJECT modals -->
+  <div>
+
+    <!-- TITLE/LABEL modal -->
+    <div class="modal fade" id="title{{ project.id }}modal" tabindex="-1"
+      aria-labelledby="title{{ project.id }}modalLabel" aria-hidden="true">
+      <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content container-md">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5 text-muted" id="title{{ project.id }}modalLabel">{{ project.title }}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="d-flex flex-row-reverse">
+                <button class="delete-option border-0 bg-transparent" type="button" data-bs-toggle="modal"
+                  data-bs-target="#deleteProject{{ project.id }}modal"><i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </div>
+
+
+              <!-- Project Title -->
+              <div class="mb-3">
+                <label for="projectTitle" class="form-label text-muted h5">Project title</label>
+                <input name="new_title" type="text" class="form-control" id="projectTitle"
+                  placeholder="{{ project.title }}" value="{{ project.title }}">
+              </div>
+              <hr>
+
+              <h5 class="h5 text-muted">Customize:</h5>
+              <div class="p-2">
+
+                <div class="text-center my-auto">
+                  <input name="projColor" type="color" class="form-control form-control-color" id="customProjColor"
+                    value="{{ project.color }}" title="Choose main color">
+                </div>
+
+
+              </div>
+
+              <hr>
+
+
+              <!-- Project Labels -->
+              <div>
+                <h5 class="h5 text-muted">Edit Project Labels</h5>
+
+                <p class="m-0 text-muted">selected <small> <em> (click to remove)</em></small> </p>
+
+                {% if project.labels|count == 0 %}
+                <div class="border border-2 rounded-2 p-1 mb-2">
+                  <p><em class="text-muted">No labels added</em></p>
+                </div>
+                <button class="accordion-button form-label text-muted py-0 my-0 h5" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#editProjectLabels{{ project.id }}" aria-expanded="true"
+                  aria-controls="editProjectLabels{{ project.id }}">
+                  <p class="p text-muted">+add labels</p>
+                </button>
+
+                {% else %}
+
+                <div class="border border-2 rounded-2 p-1 mb-2">
+                  {% for label in labels %}
+                  {% if label in project.labels %}
+                  {% set path = label.icon %}
+                  <div class="d-inline-flex mb-1" onclick="removeLabel(this, '{{label.id }}', '{{ project.id }}')">
+                    <div class="card px-2 w-auto position-relative" id="label{{ label.id }}"
+                      style="background-color: {{ label.color }}; cursor: pointer;">
+                      <div class="pt-1 d-inline-flex text-center">
+                        <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20"
+                          height="20">
+                        <h6 class="px-1">{{ label.name }}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% endfor %}
+                  {% endif %}
+
+
+                  {% for label in labels %}
+                  {% set path = label.icon %}
+                  <div class="d-inline-flex mb-1 d-none" id="addedlabel{{ label.id }}{{ project.id }}"
+                    onclick="removeLabel(this, '{{label.id }}', '{{ project.id }}')">
+                    <div class="card px-2 w-auto position-relative"
+                      style="background-color: {{ label.color }}; cursor: pointer;">
+                      <div class="pt-1 d-inline-flex text-center">
+                        <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20"
+                          height="20">
+                        <h6 class="px-1">{{ label.name }}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+
+
+
+
+                </div>
+
+                <div class="accordion border-0 p-0 m-0">
+                  <div class="accordion-item border-0 p-0 m-0">
+                    <div id="editProjectLabels{{ project.id }}" class="accordion-collapse collapse show"
+                      aria-labelledby="editProjectLabels">
+                      <div class="accordion-body px-1 py-0 m-0">
+                        <div>
+
+                          <p class="m-0 text-muted">created labels <small> <em> (click to add)</em></small> </p>
+                          <div class="border border-2 rounded-2 p-1 mb-2">
+
+                            {% for label in labels %}
+
+                            {% if not label in project.labels %}
+
+                            {% set path = label.icon %}
+                            <div class="d-inline-flex mb-1">
+                              <div class="card px-2" id="label{{ label.id }}"
+                                onclick="addLabel(this, '{{ label.id }}', '{{ project.id }}')"
+                                style="background-color: {{ label.color }}; cursor: pointer;">
+                                <div class="pt-1 d-inline-flex text-center">
+                                  <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20"
+                                    height="20">
+                                  <h6 class="px-1">{{ label.name }}</h6>
+                                </div>
+                              </div>
+                            </div>
+
+                            {% endif %}
+                            {% endfor %}
+                            {% for label in labels %}
+
+                            {% set path = label.icon %}
+                            <div class="d-inline-flex mb-1">
+                              <div class="card px-2 d-none" id="removedlabel{{ label.id }}{{ project.id }}"
+                                onclick="addLabel(this, '{{ label.id }}', '{{ project.id }}')"
+                                style="background-color: {{ label.color }}; cursor: pointer;">
+                                <div class="pt-1 d-inline-flex text-center">
+                                  <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20"
+                                    height="20">
+                                  <h6 class="px-1">{{ label.name }}</h6>
+                                </div>
+                              </div>
+                            </div>
+
+                            {% endfor %}
+                          </div>
+                        </div>
+
+
+                        <button type="button" class="delete-option btn border-0 bg-transparent text-center my-2"
+                          id="createlabel{{ project.id }}" data-bs-toggle="collapse"
+                          data-bs-target="#addProjectLabels{{ project.id }}" aria-expanded="true"
+                          aria-controls="addProjectLabels{{ project.id }}"
+                          onclick="toggleCancelBtn(this,'{{ project.id }}')">
+                          + Create Label
+                        </button>
+
+                        <div class="accordion">
+                          <div class="accordion-item border-0 p-0 m-0">
+                            <div id="addProjectLabels{{ project.id }}" class="accordion-collapse collapse"
+                              aria-labelledby="addProjectLabels">
+                              <div class="accordion-body px-1 py-0 m-0">
+                                <h6 class="h6 text-muted">Create new label</h6>
+                                <div class="d-inline-flex w-100 flex-row">
+                                  {% set randIcon = get_random_icon() %}
+                                  {% set randColor = getRandomColor() %}
+                                  <div class="icon-width px-2 ps-3 m-2 rounded-5 w-50"
+                                    style="background-color: {{ randColor }}; cursor: pointer;"
+                                    id="newLabel{{ project.id }}">
+
+                                    <div class="pt-1 d-inline-flex text-center">
+                                      <img id="displayedIcon{{ project.id }}" class="my-1 py-1"
+                                        src="{{ url_for('static', filename=folder_dir+randIcon) }}" width="40"
+                                        height="40">
+                                      <input class="form-control bg-transparent border-0 w-100" name=""
+                                        placeholder="Label name goes here..." oninput="labelName(this)">
+                                    </div>
+                                  </div>
+                                  <!-- COLOR picker -->
+                                  <div class="text-center my-auto" id="labelColor{{ project.id }}">
+                                    <input name="labelColor" type="color" class="form-control form-control-color"
+                                      id="newLabelColor{{ project.id }}" value="{{ randColor }}"
+                                      onclick="addCustomColor(this, '{{ project.id }}');" title="Choose main color">
+                                  </div>
+
+                                  <input type="text" name="newLabelIcon" id="iconInput{{ project.id }}"
+                                    value="{{ randIcon }}" hidden>
+                                  <input type="text" name="newLabelColor" id="colorInput{{ project.id }}"
+                                    value="{{ randColor }}" hidden>
+                                </div>
+                                <div class="row g-3">
+
+                                  <!-- ICON library -->
+                                  <div class="border border-3 overflow-scroll rounded-2 mh25vh" id="iconLibrary{{ project.id }}">
+                                    {% for icon in icons %}
+                                    <p id="iconTest" hidden>{{ icon|tojson }}</p>
+                                    <button class="btn btn-transparent" value="{{ icon }}" id="clickedIcon"
+                                      type="button" onclick="changeIconImage(this, '{{ project.id }}')">
+
+                                      <img class="m-1" src="{{ url_for('static', filename=folder_dir+icon) }}"
+                                        width="25" height="25">
+                                    </button>
+                                    {% endfor %}
+                                  </div>
+                                </div>
+                              </div>
+                              <button type="button" class="btn btn-outline-secondary text-center my-2"
+                                id="createlabel{{ project.id }}cancel" data-bs-toggle="collapse"
+                                data-bs-target="#addProjectLabels{{ project.id }}" aria-expanded="false"
+                                aria-controls="addProjectLabels{{ project.id }}">
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+
+
+
+
+              <!-- Project Status -->
+
+              <div>
+                <hr>
+                <fieldset class="row mb-3">
+                  <label for="projectStatus" class="form-label text-muted h5">Project status</label>
+                  <div id="projectStatus">
+                    <div class="form-check">
+                      <input onclick="handleThis(this, 'project', '{{ project.id }}', 'complete')"
+                        class="form-check-input" type="radio" name="projectComplete" id="project-complete-0"
+                        value="false" checked>
+                      <label class="form-check-label" for="project-complete-0">
+                        Not Complete
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input onclick="handleThis(this, 'project', '{{ project.id }}', 'complete')"
+                        class="form-check-input" type="radio" name="projectComplete" id="project-complete-1"
+                        value="true">
+                      <label class="form-check-label" for="project-complete-1">
+                        Complete
+                      </label>
+                    </div>
+                </fieldset>
+
+                {% if project.tasks %}
+
+
+                <div id="project{{ project.id }}complete" class="d-none">
+                  <fieldset class="row mb-3">
+                    <label for="projectStatus" class="form-label text-muted h5">Tasks Status</label>
+                    <div id="projectStatus">
+                      <div class="form-check">
+                        <input onclick="handleThis(this, 'project', '{{ project.id }}', 'task-complete')"
+                          class="form-check-input" type="radio" name="projecttask-Complete" id="project-task-complete-0"
+                          value="false" checked>
+                        <label class="form-check-label" for="project-task-complete-0">
+                          Set all unfinished tasks to complete
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input onclick="handleThis(this, 'project', '{{ project.id }}', 'task-complete')"
+                          class="form-check-input" type="radio" name="projecttask-Complete" id="project-task-complete-1"
+                          value="true">
+                        <label class="form-check-label" for="project-task-complete-1">
+                          Choose tasks to mark as complete
+                        </label>
+                      </div>
+                  </fieldset>
+
+                  <div id="project{{ project.id }}task-complete" class="d-none">
+                    <label for="tasks" class="form-label text-muted h5">Mark tasks as complete: </label>
+                    <br>
+                    <div class="border border-2 rounded-2 p-2">
+                      {% for task in project.tasks %}
+
+                      {% if task.complete == False %}
+
+
+                      <input name="task-markedascomplete{{ task.id }}" type="checkbox"> {{ task.title }}
+                      <br>
+
+                      {% endif %}
+                      {% endfor %}
+
+                    </div>
+                  </div>
+                </div>
+
+                {% endif %}
+                <hr>
+              </div>
+
+
+
+              <div class="modal-footer">
+                <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Edit Overview Modal -->
+    <div class="modal fade" id="overview{{ project.id }}modal" tabindex="-1"
+      aria-labelledby="overview{{ project.id }}modalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="overview{{ project.id }}modalLabel">{{ project.title }}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+
+              <div class="d-flex flex-column flex-lg-row gap-3 justify-content-around">
+
+                <!-- PRIORITY -->
+                <div id="project-{{ project.id }}priority" aria-labelledby="project-{{ project.id }}priority">
+                  <h6 class="h6 text-muted">Priority: </h6>
+                  <div class="border border-2 rounded-2 p-2">
+
+                    {% if project.priority != "None" %}
+
+                    <div class="rounded-2 bg-light px-2">
+
+                      <small><em>Currently: </em> </small>
+                      <br> <span class="fw-light">{{ project.priority }}
+                      </span>
+                    </div>
+
+
+
+
+                    {% endif %}
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="editProjectPriority" value="None"
+                      id="project-{{ project.id }}priority-none" autocomplete="off" {% if project.priority == "None" %}
+                      checked {% endif %}>
+                    <label class="btn btn-outline-secondary mx-auto my-1 py-1"
+                      for="project-{{ project.id }}priority-none">None</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto" name="editProjectPriority" value="Low"
+                      id="project-{{ project.id }}priority-low" autocomplete="off" {% if project.priority == "Low" %}
+                      checked {% endif %}>
+                    <label class="btn btn-outline-success mx-auto my-1 py-1"
+                      for="project-{{ project.id }}priority-low">Low</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="editProjectPriority" value="Medium"
+                      id="project-{{ project.id }}priority-medium" autocomplete="off"
+                      {% if project.priority == "Medium" %} checked {% endif %}>
+                    <label class="btn btn-outline-info mx-auto my-1 py-1"
+                      for="project-{{ project.id }}priority-medium">Medium</label>
+                    <br>
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="editProjectPriority" value="High"
+                      id="project-{{ project.id }}priority-high" autocomplete="off" {% if project.priority == "High" %}
+                      checked {% endif %}>
+                    <label class="btn btn-outline-warning mx-auto my-1 py-1"
+                      for="project-{{ project.id }}priority-high">High</label>
+                    <br>
+
+
+
+                    <input type="radio" class="btn-check mx-auto my-1" name="editProjectPriority" value="Urgent"
+                      id="project-{{ project.id }}priority-urgent" autocomplete="off"
+                      {% if project.priority == "Urgent" %} checked {% endif %}>
+                    <label class="btn btn-outline-danger mx-auto my-1 py-1"
+                      for="project-{{ project.id }}priority-urgent">Urgent</label>
+                    <br>
+
+
+                  </div>
+                </div>
+
+                <!-- DUE DATE -->
+                <div id="project-{{ project.id }}due-date" aria-labelledby="project-{{ project.id }}due-date">
+                  <h6 class="h6 text-muted">Due Date: </h6>
+                  <div class="border border-2 rounded-2 p-2">
+                    {% if project.due_date != None %}
+                    <div class="rounded-2 bg-light px-2">
+
+                      <small><em>Currently: </em> </small>
+                      <br> <span class="fw-light">{{ yyyy_mm_dd_hh_mm_ss_zz(project.due_date) }}
+                      </span>
+                    </div>
+
+                    {% endif %}
+
+                    <input name="no_due_date" id="noduedate{{ project.id }}" type="checkbox">
+                    <label for="#noduedate{{ project.id }}">no due date</label>
+
+                    <input class="form-control w-100 mx-auto my-1" onchange="showChange(this)" type="date"
+                      name="editProjectDueDate" value="{{ project.due_date }}">
+                    <input class="form-control d-none w-100 mx-auto my-1" type="time" value="{{ project.due_date }}"
+                      name="editProjectDueDateTime">
+                  </div>
+                </div>
+
+
+                <!-- PRODUCTIVITY GOAL -->
+
+                <div id="project-{{ project.id }}productivity" aria-labelledby="project-{{ project.id }}productivity">
+                  <h6 class="h6 text-muted">Productivity Goal: </h6>
+                  <div class="border border-2 rounded-2 p-2">
+
+                    <div id="project-{{ project.id }}productivity"
+                      aria-labelledby="project-{{ project.id }}productivity">
+
+                      {% if project.goal_time != None %}
+
+
+
+
+
+                      {% set gt_seconds = convert_time(project.goal_time)[0] %}
+                      {% set gt_minutes = convert_time(project.goal_time)[1] %}
+                      {% set gt_hours = convert_time(project.goal_time)[2] %}
+                      <div class="rounded-2 bg-light px-2">
+                        <p class="p-0 m-0">
+                          <small><em>Currently: </em> </small>
+                          <br>
+                          <span class="fw-light d-inline-flex">
+
+                            {% if gt_hours %}
+                            {% if gt_hours >= 0  %}
+                            <span class="goal p-0 m-0">{{gt_hours}}:</span>
+                            {% endif %}
+                            {% endif %}
+
+                            {% if gt_minutes %}
+                            {% if gt_minutes == 0  %}
+                            <span class="goal p-0 m-0">00:00</span>
+                            {% elif gt_minutes < 10 %}
+
+                            <span class="goal p-0 m-0">0{{gt_minutes}}:00</span>
+                            {% else %}
+                            <span class="goal p-0 m-0">{{gt_minutes}}:00</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="goal p-0 m-0">00:00</span>
+                            {% endif %}
+                            /
+                          </span>
+                          <span class="fw-light">{{ project.goal_per }} </span></p>
+                      </div>
+
+                      {% endif %}
+
+                      <button type="button"
+                        onclick="showEditableProducivityGoal(this, '{{ project.id }}', '{{ project.goal_per }}', '{{ project.goal_time }}')"
+                        class="btn btn-sm btn-outline-info m-2">Edit</button>
+
+                      <div id="editProductivityTime{{ project.id }}" class="d-none">
+
+                        <label for="perSelect" class="text-muted ">Frequency</label>
+
+                        <div id="project-{{ project.id }}goalrange">
+                          <div id="goalElem" class="h5 text-center p-0 m-0">
+
+                          </div>
+                          <input name="goal-time" type="range" class="form-range m-2 mt-0 mx-auto" min="1"
+                            id="inputGoal" oninput="showGoal(this)">
+
+                          <label for="perSelect" id="project-{{ project.id }}goalperlabel"
+                            class="text-muted">Per</label>
+                        </div>
+
+                        <select name="goal-per" id="perSelect{{ project.id }}" class="form-select mx-auto"
+                          aria-label="Frequency select" onchange="timePer(this)">
+                          <option {% if project.goal_per == "0" %} selected {% endif %} value="0">None</option>
+                          <option {% if project.goal_per == "day" %} selected {% endif %} value="day">Daily</option>
+                          <option {% if project.goal_per == "week" %} selected {% endif %} value="week">Weekly</option>
+                          <option {% if project.goal_per == "month" %} selected {% endif %} value="month">Monthly
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+
+              </div>
+
+
+
+
+
+
+            </div>
+            <div class="modal-footer">
+              <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Description Modal -->
+    <div class="modal fade" id="description{{ project.id }}modal" tabindex="-1"
+      aria-labelledby="description{{ project.id }}modalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="description{{ project.id }}modalLabel">{{ project.title }}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="description-area{{project.id}}edit"
+                class="description-area px-3 py-2 accordion-collapse collapse show">
+
+                <div class="mb-1 w-100 rounded-2 px-2 py-0 m-0 ">
+                  <label for="description{{ project.id }}" class="form-label text-muted h5">Description</label>
+                  <textarea class="w-100 rounded-2" rows="6" name="description" id="description{{ project.id }}"
+                    placeholder="Enter description here..." value="{{ project.description }}">
+                  {%- if project.description != None -%}{{ project.description }}{% endif %}</textarea>
+                </div>
+
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Attachments Modal -->
+    <div class="modal fade" id="attachments{{ project.id }}modal" tabindex="-1"
+      aria-labelledby="attachments{{ project.id }}modalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form"
+          enctype="multipart/form-data">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="attachments{{ project.id }}modalLabel">{{ project.title }}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+              <div class="row">
+                <div class="mb-3">
+                  <label for="uplImg{{ project.id }}" class="form-label">Image Upload</label>
+                  <input onchange="previewImage(this)" class="form-control" accept="image/*" type="file"
+                    id="uplImg{{ project.id }}" name="upload-img">
+                  <img class="mt-5" id="uploadedImg{{ project.id }}" src="#" alt="your uploaded file"
+                    style="width: 20vw;">
+                </div>
+              </div>
+
+
+            </div>
+            <div class="modal-footer">
+              <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <!-- Edit Project Attachments Modal -->
+    <div class="modal fade" id="imageModalFor{{ project.id }}" tabindex="-1"
+      aria-labelledby="imageModalFor{{ project.id }}Label" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form"
+          enctype="multipart/form-data">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="attachments{{ project.id }}modalLabel">{{ project.title }}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+              <button data-bs-toggle="modal" data-bs-target="#attachments{{ project.id }}modal" type="button"
+                class="btn btn-secondary">Add attachments</button>
+
+
+
+              <div id="projectImages{{ project.id }}" class="carousel slide carousel-dark" data-bs-ride="carousel">
+                <div class="carousel-inner bg-light p-4 rounded-2 my-2 position-relative">
+                  {% for img in project.images %}
+
+
+
+
+
+                  <div id="img{{ img.id }}" class="carousel-item {% if loop.index == 1 %} active {% endif %}">
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                      <button class="delete-option border-0 bg-transparent" type="button" data-bs-toggle="modal"
+                        data-bs-target="#deleteImage{{ project.id }}{{ img.id }}modal"><i class="fa-solid fa-trash"></i>
+                        Delete{{ img.id }}
+                      </button>
+                    </div>
+
+
+                    {% set path = img.filename %}
+                    <img src="{{ url_for('static', filename=user_img_dir+path) }}" class="d-block w-100">
+                  </div>
+                  {% endfor %}
+                </div>
+
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#projectImages{{ project.id }}"
+                  data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#projectImages{{ project.id }}"
+                  data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+
+            </div>
+
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <!-- delete project image modal -->
+    {% for img in images %}
+    <div class="modal fade" id="deleteImage{{ project.id }}{{ img.id }}modal" tabindex="-1"
+      aria-noteledby="deleteImage{{ project.id }}{{ img.id }}modal" aria-hidden="true">
+      <form action="{{ url_for('projects.delete_img', project_id = project.id, img_id = img.id) }}" method="POST"
+        role="form">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deleteImage{{ project.id }}{{ img.id }}modal-header">Delete
+                Attachment?{{ img.id }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-note="Close"></button>
+            </div>
+
+            <div class="modal-body">
+
+              {% for imgage in project.images %}
+
+              {% if imgage.id == img.id %}
+
+              <div id="delimg{{ img.id }}">
+                {% set path = img.filename %}
+                <img src="{{ url_for('static', filename=user_img_dir+path) }}" class="d-block w-100">
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-danger" data-bs-toggle="modal" value="true"
+                name="projectImageDelete">Delete</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+
+
+
+  </div>
+
+
+  <!-- delete project modal -->
+  <div class="modal fade" id="deleteProject{{ project.id }}modal" tabindex="-1"
+    aria-noteledby="deleteProject{{ project.id }}modal" aria-hidden="true">
+    <form action="{{ url_for('projects.update_project', project_id = project.id) }}" method="POST" role="form">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteProject{{ project.id }}modal">Are you sure you want to delete
+              {{ project.title }} ?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-note="Close"></button>
+          </div>
+          <div class="modal-body">
+            <em>If deleted you will have 30 days to undo before project is permanently deleted</em>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-danger" data-bs-toggle="modal" value="true"
+              name="projectDelete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+
+  {% endfor %}
+
+
+
+
+  {% for task in tasks %}
+  <!-- Edit Task Modal -->
+  <div class="modal fade" id="task{{ task.id }}modal" tabindex="-1" aria-labelledby="task{{ task.id }}modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <form action="{{ url_for('tasks.update_task', task_id=task.id) }}" method="POST">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="task{{ task.id }}modalLabel">{{ task.title }}</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- TITLE and Labels -->
+            <div>
+              <div class="mb-3">
+                <label for="taskTitle" class="form-label text-muted h5">Task title</label>
+                <input name="editTaskTitle" type="text" class="form-control" id="taskTitle"
+                  placeholder="Enter Project title..." value="{{ task.title }}">
+              </div>
+              <!-- DESCRIPTION -->
+              <div>
+                <label for="description" class="form-label text-muted h5">Description</label>
+                <textarea class="form-control rounded-2" rows="3" name="editTaskDescription" id="description"
+                  value="{{ task.description }}">{{ task.description }}</textarea>
+              </div>
+              <hr>
+            </div>
+
+            <hr>
+
+            <!-- OVERVIEW -->
+            <div class="d-flex flex-column flex-lg-row gap-3 justify-content-around">
+
+              <!-- PRIORITY -->
+              <div id="task-priority" aria-labelledby="task-priority">
+                <h5 class="h5 text-muted">Priority: </h5>
+                <div>
+
+                  <p><em>Currently: </em> <br> <span class="fw-light">{{ task.priority }} </span></p>
+
+                  <input type="radio" class="btn-check mx-auto my-1" name="editTaskPriority" value="{{ task.priority }}"
+                    id="task-priority-none" autocomplete="off">
+                  <label class="btn btn-outline-secondary mx-auto my-1 py-1" for="task-priority-none">None</label>
+                  <br>
+
+                  <input type="radio" class="btn-check mx-auto" name="editTaskPriority" value="{{ task.priority }}"
+                    id="task-priority-low" autocomplete="off">
+                  <label class="btn btn-outline-success mx-auto my-1 py-1" for="task-priority-low">Low</label>
+                  <br>
+
+
+
+                  <input type="radio" class="btn-check mx-auto my-1" name="editTaskPriority" value="{{ task.priority }}"
+                    id="task-priority-medium" autocomplete="off">
+                  <label class="btn btn-outline-info mx-auto my-1 py-1" for="task-priority-medium">Medium</label>
+                  <br>
+
+                  <input type="radio" class="btn-check mx-auto my-1" name="editTaskPriority" value="{{ task.priority }}"
+                    id="task-priority-high" autocomplete="off">
+                  <label class="btn btn-outline-warning mx-auto my-1 py-1" for="task-priority-high">High</label>
+                  <br>
+
+
+
+                  <input type="radio" class="btn-check mx-auto my-1" name="editTaskPriority" value="{{ task.priority }}"
+                    id="task-priority-urgent" autocomplete="off">
+                  <label class="btn btn-outline-danger mx-auto my-1 py-1" for="task-priority-urgent">Urgent</label>
+                  <br>
+
+
+                </div>
+              </div>
+
+              <!-- DUE DATE -->
+              <div id="task-due-date" aria-labelledby="task-due-date">
+                <h5 class="h5 text-muted">Due Date: </h5>
+                <div>
+                  <p><em>Current: </em> <br> <span class="fw-light">{{ wkd_mon_dd_yyy_local(task.due_date) }}
+                    </span><br>
+                    <span class="fw-light">{{ hh_mm_ss_am_local(task.due_date) }} </span></p>
+
+                  <input class="form-control w-100 mx-auto" onchange="showChange(this)" type="date"
+                    name="editTaskDueDate" value="{{ task.due_date }}">
+                  <input class="form-control d-none w-100 mx-auto" type="time" value="{{ task.due_date }}"
+                    name="editTaskDueDateTime">
+                </div>
+              </div>
+            </div>
+
+            <div class="w-100 justify-content-end d-flex">
+
+              <button type="button" data-bs-toggle="modal" data-bs-target="#delete-task-from-proj{{ task.id }}"
+                class="btn btn-sm btn-outline-danger">Delete</button>
+
+            </div>
+
+
+          </div>
+          <div class="modal-footer">
+            <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- delete task modal -->
+  <div class="modal fade" id="delete-task{{ task.id }}" tabindex="-1" aria-noteledby="delete-task{{ task.id }}"
+    aria-hidden="true">
+    <form action="{{ url_for('tasks.delete_task', task_id = task.id) }}" method="POST" role="form">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="delete-task{{ task.id }}">Delete
+              {{ task.title }} ?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-note="Close"></button>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" onclick="deleteTask(id)" data-bs-toggle="modal"
+              data-bs-target="#newprojectmodal">Delete</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- delete task from existing proj modal -->
+  <div class="modal fade" id="delete-task-from-proj{{ task.id }}" tabindex="-1"
+    aria-noteledby="delete-task{{ task.id }}" aria-hidden="true">
+    <form action="{{ url_for('tasks.delete_task_from_proj', task_id = task.id) }}" method="POST" role="form">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="delete-task{{ task.id }}">Delete
+              {{ task.title }} ?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-note="Close"></button>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {% endfor %}
+
+
+  <!-- add note modal -->
+  <div class="modal fade" id="newNoteModal" tabindex="-1" aria-noteledby="add-note" aria-hidden="true">
+    <form action="{{ url_for('notes.add_note') }}" method="POST" role="form">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="add-note">New Note</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-note="Close"></button>
+          </div>
+          <div class="modal-body" id="newNoteForm">
+
+            <input class="form-control m-1" type="text" name="noteTitle" placeholder="Note Title">
+            <textarea class="form-control m-1" name="noteContent" cols="30" rows="10"></textarea>
+
+
+          </div>
+
+
+
+
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary m-1" type="submit">Save Note</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+
+
+  <!-- MODALS^^^ -->
+
+
+</div>
+
+
+
+<div class="d-md-flex px-1 " id="mainPageArea">
+  <!-- left column -->
+  <div class="row d-md-block col-md-4 col-lg-3 col-xl-3 bg-light p-2">
+    <!-- to-do -->
+    <div id="toDoDiv" class="col-6 col-md-11 todo-and-notes ">
+      <div class="bg-transparent d-inline-flex w-100 border-0 bg-transparent d-inline-flex justify-between ps-1 pe-2">
+        <div class="me-auto">
+          <p class="text-muted h5">To-Do List</p>
+        </div>
+        <div class="ms-auto">
+          <button data-bs-toggle="collapse" data-bs-target="#todo-accordion" type=button
+            class="sm bg-transparent border-0">
+            ^
+          </button>
+          <button type=button class="sm text-nowrap text-center p-0 bg-transparent border-0">
+            <small>•••</small>
+          </button>
+        </div>
+      </div>
+      <div class="border border-2 rounded-2 accordion-collapse collapse show p-1" id="todo-accordion">
+        <form action="{{ url_for('todos.add_todo') }}" method="POST">
+          <div class="d-inline-flex ">
+            <input class="form-control border-0 border-bottom" type="text" name="todo-item" placeholder="New To-Do">
+            <button class="btn btn-primary m-1 text-nowrap" type="submit">+</button>
+          </div>
+        </form>
+
+        <div class="todo-div">
+
+          {% set num_todos = todos|count %}
+
+          {% if num_todos == 0 %}
+
+          <p class="text-center"><em class="text-muted"> No To-Do items added yet</em></p>
+
+          {% else %}
+
+          {% for date in todos_dates|sort(attribute='date_added', reverse=True) %}
+
+          <p class="text-muted"><em>{{ wkd_mon_dd_yyy_local(date) }}</em></p>
+
+          {% for todo in todos|sort(attribute='date_added', reverse=True) %}
+
+          {% if yyyy_mm_dd(date) == yyyy_mm_dd(todo.date_added) %}
+
+          {% if todo.complete == False %}
+
+          <div class="ms-3 d-inline-flex">
+            <input type="checkbox" class="me-1" onclick="submitForm('{{ todo.id }}')">
+            <p class="m-0" onfocus="onFocusFunction('{{ todo.id }}')">{{ todo.item }}
+            </p>
+          </div>
+          <br>
+
+          <form id="todoComplete{{ todo.id }}" method="POST"
+            action="{{ url_for('todos.update_todo', todo_id = todo.id) }}" hidden>
+            <input type="checkbox" name="todo-complete" checked>
+          </form>
+
+          {% endif %}
+          {% endif %}
+          {% endfor %}
+
+
+          {% for todo in todos|sort(attribute='date_added', reverse=True) %}
+
+          {% if yyyy_mm_dd(date) == yyyy_mm_dd(todo.date_added) %}
+          {% if todo.complete == True %}
+          <div class="ms-3">
+            <p class="text-decoration-line-through m-0 text-muted"><input onclick="submitForm('{{ todo.id }}')"
+                type="checkbox" class="me-1" checked>{{ todo.item }}</p>
+          </div>
+
+          <form id="todoComplete{{ todo.id }}" method="POST"
+            action="{{ url_for('todos.update_todo', todo_id = todo.id) }}" hidden>
+            <input type="checkbox" name="todo-complete">
+          </form>
+          {% endif %}
+          {% endif %}
+          {% endfor %}
+          {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      <hr class="d-none d-md-flex w-75 mx-auto ">
+
+    </div>
+    <!-- notes -->
+    <div class="col-6 col-md-11 todo-and-notes">
+      <div class="w-100 border-0 bg-transparent d-inline-flex justify-between ps-1 pe-2">
+        <div class="me-auto">
+          <p class="text-muted h5">Notes</p>
+        </div>
+        <div class="ms-auto">
+          <button data-bs-toggle="collapse" data-bs-target="#notes-accordion" type=button
+            class="sm bg-transparent border-0">
+            ^
+          </button>
+          <button type=button class="sm text-nowrap text-center p-0 bg-transparent border-0">
+            <small>•••</small>
+          </button>
+        </div>
+
+      </div>
+      <div class="accordion-collapse collapse show" id="notes-accordion">
+
+
+
+
+        <div class="border border-2 rounded-2 px-2">
+
+          <!-- add note -->
+          <form action="{{ url_for('notes.add_note') }}" method="POST">
+            <div class="d-none" id="newNoteForm">
+              <input class="form-control m-1" type="text" name="noteTitle" placeholder="Note Title">
+              <textarea class="form-control m-1" name="noteContent" cols="30" rows="10"></textarea>
+              <div class="btn-group border border-2">
+                <button class="btn btn-secondary m-1" type="reset" onclick="removeNoteInputs()">Cancel</button>
+                <button class="btn btn-primary m-1" type="submit">Save Note</button>
+              </div>
+
+            </div>
+          </form>
+
+          <!-- Very first note -->
+          {% set num_notes = notes|count %}
+          {% if num_notes == 0 %}
+
+          <form action="{{ url_for('notes.add_note') }}" method="POST">
+            <div class="" id="newNoteForm">
+              <input class="form-control m-1" type="text" name="noteTitle" placeholder="Note Title">
+              <textarea class="form-control m-1" name="noteContent" cols="30" rows="10"></textarea>
+
+              <div class="btn-group border border-2">
+                <button class="btn btn-secondary m-1" type="reset">Cancel</button>
+                <button class="btn btn-primary m-1" type="submit">Save Note</button>
+              </div>
+            </div>
+          </form>
+
+          {% else %}
+
+          <button id="newNoteBtnLg" class="ms-auto bg-transparent border-0 d-none d-md-block"
+            onclick="showNoteInputs(this)"><em class="text-muted">+
+              New Note</em></button>
+
+
+          <button data-bs-toggle="modal" data-bs-target="#newNoteModal" id="newNoteBtn"
+            class="bg-transparent border-0 d-md-none"><em class="text-muted">+
+              New Note</em></button>
+
+          {% endif %}
+
+          {% for note in notes %}
+          <div class="border border-2 rounded-2 bg-white m-1 mx-1 p-1">
+
+            <button data-bs-toggle="modal" data-bs-target="#delete-note{{ note.id }}" id="delete-note-item{{ note.id }}"
+              class="border-0 bg-transparent"><i class="fa-solid fa-trash fa-sm opacity-50"></i></button>
+
+
+
+            <div type="button" class="bg-transparent border-0 p-0 m-0">
+              <div class="overflow-hidden">
+                <small class="text-muted ms-auto my-1"><em>{{ wkd_mon_dd_yyy_local(note.date_added) }} at
+                    {{ hh_mm_ss_am_local(note.date_added) }}</em></small>
+                <h6 class="text-start">{{ note.title }}</h6>
+                <div class="text-truncate text-start" onclick="removeTruncate(this)">
+                  <p>{{ note.content }}</p>
+                </div>
+              </div>
+            </div>
+
+
+
+
+          </div>
+          {% endfor %}
+
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-1 d-none d-md-inline d-lg-none">
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div class="col container-fluid p-0">
+
+
+
+
+    <!-- NAV bar -->
+    <div class="container-fluid p-0">
+      <nav class="navbar navbar-expand bg-light" id="proj-nav-bar">
+        <div class="container-fluid">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <div class="proj-size-btns">
+              <button value="big" type="button" name="projSizes" id="projLarge"
+                class="btn my-auto border bg-trasnparent" {{ authorized }} onclick="resizeProj(this)"><i
+                  class="fa-solid fa-window-maximize"></i></button>
+              <button value="small" type="button" name="projSizes" id="projSmall"
+                class="btn my-auto border bg-trasnparent" {{ authorized }} onclick="resizeProj(this)"><i
+                  class="fa-solid fa-grip-lines"></i></button>
+            </div>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+
+
+
+    <div class="container-fluid d-inline-flex w-100 m-0 p-0 px-2">
+      <div id="mainProjArea" class="p-0 m-0 w-100">
+        <div class="container-fluid  mx-auto">
+          {% if active_projects|count == 0%}
+          <div class="display-6 text-muted"><em>No active projects to work on at the moment...</em></div>
+          {% endif %}
+          {% if all_projects|count == 0 %}
+
+          <div class="display-5 text-muted"><em>Add a new project to get started</em></div>
+          <button type="button" data-bs-toggle="modal" data-bs-target="#newprojectmodal"
+            class="btn btn-outline-info btn-lg w-auto"><i class="fa-solid fa-plus"></i><em>New Project</em></button>
+
+          {% else %}
+
+
+
+          {% for project in active_projects|sort(attribute='date_updated', reverse=True) %}
+
+          {% set x = project.due_date %}
+
+
+          <div value="{{ project.id }}" class="project-container mx-1 rounded-2 p-3 my-3 d-none"
+            style="background-color: {{ project.color }};" id="project{{ project.id }}" onclick="">
+
+            <!-- TITLE/LABEL section -->
+            <section class="title-label-section mb-1 p-2 position-relative rounded-2">
+              <button type="button" class="sm text-center p-0 position-absolute top-0 end-0 border-0 bg-transparent"
+                data-bs-toggle="modal" data-bs-target="#title{{ project.id }}modal" id="title{{ project.id }}editbtn">
+                •••
+              </button>
+              <h3 class="title display-6 proj-card-title fw-light">
+                {{ project.title }}
+              </h3>
+              <div class="d-inline-flex">
+
+                {% for label in labels %}
+
+                {% if label in project.labels %}
+
+                {% set path = label.icon %}
+
+                <div class="col-auto m-auto">
+                  <div class="card px-2 w-auto" id="label{{ label.id }}" style="background-color: {{ label.color }};">
+                    <div class="pt-1 d-inline-flex text-center">
+                      <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                      <h6 class="px-1">{{ label.name }}</h6>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+              </div>
+            </section>
+
+            <!-- OVERVIEW -->
+            <section class="overview-section mb-1 px-2 position-relative rounded-2 proj-section-med-size">
+              <button type="button" class="sm text-center p-0 position-absolute top-0 end-0 border-0 bg-transparent"
+                data-bs-toggle="modal" data-bs-target="#overview{{ project.id }}modal"
+                id="overview{{ project.id }}editbtn">
+                •••
+              </button>
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#overview-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5 accordion-header">
+                  Overview
+                </button>
+              </div>
+
+              <div id="overview-area{{ project.id }}" class="overview-area px-3 py-2 accordion-collapse collapse show">
+
+                <hr class="m-1 ">
+                {% if ((project.due_date) or (project.priority) or (project.last_session) or (project.goal_time)) %}
+                {% else %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#overview{{ project.id }}modal"
+                  id="overview{{ project.id }}editbtn">
+                  <em class="text-muted"> + project details</em>
+                </button>
+
+                {% endif %}
+
+                {% if project.due_date%}
+                <div
+                  class="border border-2 border-{{ project.status }} mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">status</p>
+                  <p class="ms-auto p-0 m-0">
+
+                    {{ project.time_remaining }}
+
+
+                  </p>
+                </div>
+                {% endif %}
+
+                {% if project.due_date%}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">due-date</p>
+                  <p class="ms-auto p-0 m-0 ">{{ weekday_month_dd_yyyy(project.due_date) }} at
+                    {{ hh_mm_ss_am(project.due_date) }}</p>
+                </div>
+                {% endif %}
+
+                {% if project.priority %}
+                {% if project.priority != "None" %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto m-0 p-0 me-3">priority</p>
+                  <p class="ms-auto m-0 ps-3 ms-3">{{ project.priority }}</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+
+                {% if project.last_session %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">last session</p>
+                  {% set ls_seconds, ls_minutes, ls_hours = convert_time(project.last_session) %}
+                  {% set padded_ls_hours, padded_ls_minutes, padded_ls_seconds = add_padding(ls_hours, ls_minutes, ls_seconds) %}
+
+                  <p class="ms-auto p-0 m-0">{{ padded_ls_hours }}:{{ padded_ls_minutes }}:{{ padded_ls_seconds }}</p>
+
+                </div>
+                {% endif %}
+
+
+                {% if project.goal_time %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">productivity goal</p>
+                  <p class="ms-auto p-0 m-0">
+
+                    {% set gt_seconds, gt_minutes, gt_hours = convert_time(project.goal_time) %}
+                    {% set padded_gt_hours, padded_gt_minutes, padded_gt_seconds = add_padding(gt_hours, gt_minutes, gt_seconds) %}
+
+                    <span id="goalToHit{{ project.id }}" class="d-inline-flex">
+                      {{ padded_gt_hours }}:{{ padded_gt_minutes }}:{{ padded_gt_seconds }}/ {{ project.goal_per }}</p>
+                  </span>
+                </div>
+                {% endif %}
+
+                {% if project.goal_time %}
+
+                <!-- TIMER -->
+                <div class="timer-card d-flex flex-row-reverse">
+                  {% set projSessions = project.sessions %}
+                  {% set total_seconds = project.sessions | sum(attribute='seconds') %}
+                  {% set seconds_remaining = project.goal_time - total_seconds %}
+
+                  <form id="timer-form{{ project.id }}"
+                    action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+                    <div class="d-inline-flex">
+                      <!-- Last Session -->
+                      <div>
+                        <div name="last-session" id="time{{ project.id }}">
+                          {% if project.last_session == None %}
+                          <p class="timer">00:00:00</p>
+                          {% else %}
+
+                          {% if project.last_session %}
+
+                          {% set ls_seconds, ls_minutes, ls_hours = convert_time(total_seconds) %}
+
+                          {% set padded_ls_hours, padded_ls_minutes, padded_ls_seconds = add_padding(ls_hours, ls_minutes, ls_seconds) %}
+
+                          <div class="d-inline-flex">
+                            {{ padded_ls_hours }}:{{ padded_ls_minutes }}:{{ padded_ls_seconds }}
+                          </div>
+                          {% endif %}
+                          {% endif %}
+
+                        </div>
+                      </div>
+                      <textarea name="last-session" id="last-session-temp{{ project.id }}" hidden></textarea>
+                      <textarea id="hidden-value{{ project.id }}" hidden></textarea>
+
+                      <!-- START/ STOP timer btns -->
+                      <div id="controls">
+                        <button class="btn btn-success rounded-circle btn-sm mx-2" id="start{{ project.id }}"
+                          onclick="startTimer('{{ project.id }}','{{ total_seconds }}')" type="button"><i
+                            class="fa-solid fa-play"></i></button>
+
+                        <button class="btn btn-danger rounded-circle btn-sm mx-2 d-none" id="stop{{ project.id }}"
+                          type="button"><i class="fa-solid fa-stop"></i></button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+                {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+              </div>
+            </section>
+            <!-- DESCRIPTION -->
+            <section class="description-section mb-1 px-2 position-relative rounded-2 proj-section-med-size">
+              <button type="button"
+                class="sm text-center p-0 position-absolute top-0 end-0 border-0 bg-transparent plus-item-btn"
+                data-bs-toggle="modal" data-bs-target="#description{{ project.id }}modal"
+                id="description{{ project.id }}editbtn">
+                •••
+              </button>
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#description-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Description
+                </button>
+              </div>
+
+
+              <div id="description-area{{ project.id }}"
+                class="description-area px-3 py-2 accordion-collapse collapse show">
+                <hr class="m-1 ">
+
+                {% if project.description %}
+
+
+                {{ project.description }}
+
+                {% else %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#description{{ project.id }}modal"
+                  id="description{{ project.id }}editbtn">
+                  <em class="text-muted"> + project description</em>
+                </button>
+
+
+
+                {% endif %}
+              </div>
+
+
+            </section>
+            <!-- TASKS -->
+            <section class="tasks-section mb-1 px-2 position-relative rounded-2 proj-section-med-size">
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#task-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+
+                  Tasks <!-- ( {{ project.tasks|count }} ) -->
+                </button>
+              </div>
+
+              <div id="task-area{{ project.id }}" class="tasks-area px-3 accordion-collapse collapse show pb-1">
+                <hr class="m-1 ">
+                <div>
+                  {% set task_total = project.tasks|count %}
+                  {% set task_completed = project.tasks|rejectattr('complete', 'false')|list %}
+                  {% set completed_tasks = task_completed|count %}
+                  {% if task_total != 0  %}
+                  {% set task_complete_percentage = ((completed_tasks/task_total)*100)|round|int %}
+
+                  <p class="m-0 p-0"><em class="text-muted">Progress</em></p>
+
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" aria-label="Example with label"
+                      style="width: {{ task_complete_percentage }}%;" aria-valuenow="{{ task_complete_percentage }}"
+                      aria-valuemin="0" aria-valuemax="100">{{ task_complete_percentage }}%</div>
+                  </div>
+
+                  {% endif %}
+                </div>
+
+                <ul class="m-0 p-0">
+                  <li class="m-0 p-0 my-3">
+                    <!-- ADD Task Btn -->
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#addTaskModalFromProj{{ project.id }}"
+                      class="btn btn-sm btn-outline-info mx-1 rounded-3">+ Add Task</button>
+                  </li>
+
+
+                  {% if project.tasks|count == 0  %}
+                  {% else %}
+                 <!-- <li class="m-0 p-0 my-3">
+                    <div class="d-inline-flex">
+
+                      <div class="mx-1">
+                        <label for="tasks{{ project.id }}sortby" class="text-nowrap text-muted">Sort By: </label>
+                        <br>
+                        <select id="tasks{{ project.id }}sortby" class="form-select form-select-sm mx-1"
+                          aria-label="sort by">
+                          <option value="1">Priority</option>
+                          <option value="2">Due Date</option>
+                          <option value="3">Date Added</option>
+                          <option value="4" seclected>Date Updated</option>
+                        </select>
+
+                      </div>
+
+                      <div class="mx-1">
+                        <label for="tasks{{ project.id }}sortby" class="text-nowrap text-muted">Show: </label>
+                        <br>
+                        <select class="form-select form-select-sm mx-1" aria-label="show">
+                          <option value="0">Active</option>
+                          <option value="1">Completed</option>
+                          <option value="2">Deleted</option>
+                          <option value="3">All</option>
+
+                        </select>
+                      </div>
+
+                    </div>
+                  </li> -->
+
+                  {% endif %}
+
+                  {% for task in project.tasks|sort(attribute='date_added', reverse=True) %}
+                  {% if ((task.complete == False) and (task.deleted == False)) %}
+                  <li>
+                    <div class="form-check position-relative">
+                      <form id="markAsComplete-task{{ task.id }}"
+                        action="{{ url_for('tasks.complete_task', task_id=task.id) }}" method="POST">
+
+                        <input class="form-check-input" type="checkbox" id="taskCheck{{ task.id }}"
+                          onchange="this.form.submit()">
+
+
+                        <label class="form-check-label" for="taskCheck{{ task.id }}">
+                          {{ task.title }}
+                        </label>
+                      </form>
+
+                      {% if task.due_date %}
+
+                      <div class="vr mx-2"></div>
+                      {% set x_local =  yyyy_mm_dd_hh_mm_ss_zz_local(task.due_date) %}
+                      <!-- find out if there is a time set -->
+                      {% set x =  yyyy_mm_dd_hh_mm_ss_zz(task.due_date) %}
+                      {% set h1,h2,m1,m2,s1,s2 = x[-8]|int, x[-7]|int, x[-5]|int, x[-4]|int, x[-2]|int, x[-1]|int  %}
+
+                      <!-- if there is no time specified -->
+                      {% if ((h1 + h2 + m1 + m2 + s1 + s2) < 1 )  %}
+
+                      {{ x_local[0:8] }}
+
+                      <!-- if there is a time specified -->
+                      {% else %}
+
+                      {{ x_local }}
+
+                      {% endif %}
+
+                      {% endif %}
+                      {% if task.priority %}
+                      <div class="vr mx-2"></div>
+                      {{ task.priority }}
+                      <div class="vr"></div>
+                      {% endif %}
+                      <button type="button"
+                        class="sm text-center p-0 position-absolute end-0 top-50 border-0 bg-transparent my-auto"
+                        data-bs-toggle="modal" data-bs-target="#task{{ task.id }}modal"
+                        id="task{{ project.id }}editbtn">
+                        •••
+                      </button>
+                    </div>
+
+                    {% if task.description %}
+
+                    <p class="text-wrap task-description ps-2">
+                      {{ task.description }}</p>
+
+                    {% endif %}
+                    <hr>
+                  </li>
+
+                  {% endif %}
+                  {% endfor %}
+                </ul>
+              </div>
+
+
+
+
+
+            </section>
+            <!-- Stats -->
+            <!--  <section class="stats-section mb-1 px-2 position-relative rounded-2 proj-section-med-size">
+              <button type="button"
+                class="sm text-center p-0 position-absolute top-0 end-0 border-0 bg-transparent plus-item-btn"
+                data-bs-toggle="modal" data-bs-target="#stats{{ project.id }}modal" id="stats{{ project.id }}editbtn">
+                •••
+              </button>
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#stats-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Stats
+                </button>
+              </div>
+
+
+            </section> -->
+            <!-- ATTACHMENTS -->
+            <section class="attachments-section mb-1 px-2 position-relative pb-1 rounded-2 proj-section-med-size">
+              <button type="button" class="sm text-center p-0 position-absolute top-0 end-0 border-0 bg-transparent"
+                data-bs-toggle="modal" data-bs-target="#attachments{{ project.id }}modal"
+                id="attachments{{ project.id }}editbtn">
+                •••
+              </button>
+
+
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#attachments-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Attachments
+                </button>
+
+              </div>
+
+              <div id="attachments-area{{ project.id }}" class="attachments-area px-3 accordion-collapse collapse show">
+                <hr class="m-1">
+
+                {% if project.images|count == 0 %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#attachments{{ project.id }}modal"
+                  id="attachments{{ project.id }}editbtn">
+                  <em class="text-muted ">+ click here to add attachments</em>
+                </button>
+                {% else %}
+
+                <div class="row">
+                  {% for img in project.images %}
+                  <div class="col-auto">
+                    {% set path = img.filename %}
+                    <img class="me-2 project-img-thumbnails-sm border border-2 rounded-2 delete-hover"
+                      src="{{ url_for('static', filename=user_img_dir+path) }}" data-bs-toggle="modal"
+                      data-bs-target="#imageModalFor{{ project.id }}">
+                  </div>
+                  {% endfor %}
+                </div>
+
+                {% endif %}
+
+              </div>
+
+            </section>
+            <!-- UPDATES -->
+            <!-- <section class="updates-section mb-1 px-2 rounded-2 proj-section-med-size">
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#updates-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Updates
+                </button>
+
+              </div>
+
+              <div id="updates-area{{ project.id }}" class="updates-area px-3 py-2 accordion-collapse collapse show">
+                <hr class="m-1 ">
+                {% for update in project.updates %}
+
+                <br>
+                {{ wkd_mon_dd_hh_mm_ss_yyyy_local(update.datetime) }} --
+                <br>
+                {{ update.column }} --
+                {{ update.message }}
+                <br>
+
+                {% endfor %}
+              </div>
+            </section> -->
+
+
+          </div>
+
+          {% endfor %}
+
+
+
+          {% for project in completed_projects|sort(attribute='date_updated', reverse=True) %}
+
+          <div class="project-container rounded-2 p-3 my-3 d-none" style="background-color: {{ project.color }};"
+            id="project{{ project.id }}">
+
+            <!-- TITLE/LABEL section -->
+            <section class="title-label-section mb-1 p-2 position-relative">
+              <div class="w-100 d-inline-flex justify-content-between">
+
+                <h3 class="title display-6 text-muted proj-card-title fw-light">
+                  {{ project.title }}
+                </h3>
+                <p><em class="text-muted fw-light">Project Complete</em></p>
+              </div>
+              <div class="d-inline-flex">
+
+                {% for label in labels %}
+
+                {% if label in project.labels %}
+
+                {% set path = label.icon %}
+
+                <div class="col-auto m-auto">
+                  <div class="card px-2 w-auto opacity-75 mx-1" id="label{{ label.id }}"
+                    style="background-color: {{ label.color }};">
+                    <div class="pt-1 d-inline-flex text-center">
+                      <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                      <h6 class="px-1">{{ label.name }}</h6>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+
+              </div>
+              <br>
+
+              <div class="d-inline-flex">
+
+                <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST"
+                  role="form">
+
+                  <input type="text" name="putBack" value="true" hidden>
+
+                  <button type="submit" class="btn bordder-0 bg-transparent text-muted m-2">To edit - click here to mark
+                    as 'Not Complete'</button>
+                </form>
+
+
+
+
+              </div>
+
+
+            </section>
+            <!-- OVERVIEW -->
+            <section class="overview-section mb-1 px-2 position-relative proj-section-med-size">
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#overview-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5 accordion-header">
+                  Overview
+                </button>
+              </div>
+
+              <div id="overview-area{{ project.id }}" class="overview-area px-3 py-2 accordion-collapse collapse">
+
+                <hr class="m-1 ">
+                {% if ((project.due_date) or (project.priority) or (project.last_session) or (project.goal_time)) %}
+                {% else %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#overview{{ project.id }}modal"
+                  id="overview{{ project.id }}editbtn">
+                  <em class="text-muted"> + project details</em>
+                </button>
+
+                {% endif %}
+
+
+                {% if project.due_date%}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">due-date</p>
+                  <p class="ms-auto p-0 m-0 ">{{ weekday_month_dd_yyy_local(project.due_date) }}</p>
+                </div>
+                {% endif %}
+
+                {% if project.priority %}
+                {% if project.priority != "None" %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto m-0 p-0 me-3">priority</p>
+                  <p class="ms-auto m-0 ps-3 ms-3">{{ project.priority }}</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+
+
+
+                {% if project.goal_time %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">productivity goal</p>
+                  <p class="ms-auto p-0 m-0">
+
+                    {% set gt_seconds = convert_time(project.goal_time)[0] %}
+                    {% set gt_minutes = convert_time(project.goal_time)[1] %}
+                    {% set gt_hours = convert_time(project.goal_time)[2] %}
+
+                    <span id="goalToHit{{ project.id }}" class="d-inline-flex">
+                      {% if gt_hours %}
+                      {% if gt_hours >= 0  %}
+                      <p class="goal p-0 m-0">{{gt_hours}}:</p>
+                      {% endif %}
+                      {% endif %}
+
+                      {% if gt_minutes %}
+                      {% if gt_minutes == 0  %}
+                      <p class="goal p-0 m-0">00:00</p>
+                      {% elif gt_minutes < 10 %}
+
+                      <p class="goal p-0 m-0">0{{gt_minutes}}:00</p>
+                      {% else %}
+                      <p class="goal p-0 m-0">{{gt_minutes}}:00</p>
+                      {% endif %}
+                      {% else %}
+                      <p class="goal p-0 m-0">00:00</p>
+                      {% endif %}
+                    </span>
+                    / {{ project.goal_per }}</p>
+                </div>
+
+
+
+
+                {% endif %}
+              </div>
+            </section>
+
+            <!-- DESCRIPTION -->
+            <section class="description-section mb-1 px-2 position-relative  proj-section-med-size">
+
+              <div id="description-area{{ project.id }}" class="description-area px-3 py-2 accordion-collapse collapse">
+                <hr class="m-1 ">
+
+                {% if project.description %}
+
+
+                {{ project.description }}
+
+                {% else %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#description{{ project.id }}modal"
+                  id="description{{ project.id }}editbtn">
+                  <em class="text-muted"> + project description</em>
+                </button>
+
+
+
+                {% endif %}
+              </div>
+
+
+            </section>
+
+            <!-- TASKS -->
+            <section class="tasks-section mb-1 px-2 position-relative  proj-section-med-size">
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#task-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Tasks
+                </button>
+              </div>
+
+              <div id="task-area{{ project.id }}" class="tasks-area px-3 accordion-collapse collapse pb-1">
+                <hr class="m-1 ">
+
+                <ul class="m-0 p-0">
+
+                  {% if project.tasks|count == 0  %}
+                  {% else %}
+                  <li class="m-0 p-0 my-3">
+                    <div class="d-inline-flex">
+
+                      <div class="mx-1">
+                        <label for="tasks{{ project.id }}sortby" class="text-nowrap text-muted">Sort By: </label>
+                        <br>
+                        <select id="tasks{{ project.id }}sortby" class="form-select form-select-sm mx-1"
+                          aria-label="sort by">
+                          <option value="1">Priority</option>
+                          <option value="2">Due Date</option>
+                          <option value="3">Date Added</option>
+                          <option value="4" seclected>Date Updated</option>
+                        </select>
+
+                      </div>
+
+                      <div class="mx-1">
+                        <label for="tasks{{ project.id }}sortby" class="text-nowrap text-muted">Show: </label>
+                        <br>
+                        <select class="form-select form-select-sm mx-1" aria-label="show">
+                          <option value="0">Active</option>
+                          <option value="1">Deleted</option>
+                          <option value="2">Completed</option>
+
+                        </select>
+                      </div>
+
+                    </div>
+                  </li>
+
+                  {% endif %}
+
+                  {% for task in project.tasks|sort(attribute='date_added', reverse=True) %}
+                  {% if ((task.complete == False) and (task.deleted == False)) %}
+                  <li>
+                    <div class="form-check position-relative">
+                      <form id="markAsComplete-task{{ task.id }}"
+                        action="{{ url_for('tasks.complete_task', task_id=task.id) }}" method="POST">
+
+                        <input class="form-check-input" type="checkbox" id="taskCheck{{ task.id }}"
+                          onchange="this.form.submit()">
+
+
+                        <label class="form-check-label" for="taskCheck{{ task.id }}">
+                          {{ task.title }}
+                        </label>
+                      </form>
+
+                      {% if task.due_date %}
+
+                      <div class="vr mx-2"></div>
+                      {% set x_local =  yyyy_mm_dd_hh_mm_ss_zz_local(task.due_date) %}
+                      <!-- find out if there is a time set -->
+                      {% set x =  yyyy_mm_dd_hh_mm_ss_zz(task.due_date) %}
+                      {% set h1,h2,m1,m2,s1,s2 = x[-8]|int, x[-7]|int, x[-5]|int, x[-4]|int, x[-2]|int, x[-1]|int  %}
+
+                      <!-- if there is no time specified -->
+                      {% if ((h1 + h2 + m1 + m2 + s1 + s2) < 1 )  %}
+
+                      {{ x_local[0:8] }}
+
+                      <!-- if there is a time specified -->
+                      {% else %}
+
+                      {{ x_local }}
+
+                      {% endif %}
+
+                      {% endif %}
+                      {% if task.priority %}
+                      <div class="vr mx-2"></div>
+                      {{ task.priority }}
+                      <div class="vr"></div>
+                      {% endif %}
+                      <button type="button" class="sm text-center p-0 position-absolute end-0 border-0 bg-transparent"
+                        data-bs-toggle="modal" data-bs-target="#task{{ task.id }}modal"
+                        id="task{{ project.id }}editbtn">
+                        •••
+                      </button>
+                    </div>
+
+                    {% if task.description %}
+
+                    <p class="text-truncate task-description ps-2" onclick="removeTruncate(this)"
+                      onblur="addTruncate(this)">
+                      {{ task.description }}</p>
+
+                    {% endif %}
+                    <hr>
+                  </li>
+
+                  {% endif %}
+                  {% endfor %}
+                </ul>
+              </div>
+            </section>
+
+            <!-- ATTACHMENTS -->
+            <section class="attachments-section mb-1 px-2 position-relative pb-1 proj-section-med-size">
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#attachments-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Attachments
+                </button>
+
+              </div>
+
+              <div id="attachments-area{{ project.id }}" class="attachments-area px-3 accordion-collapse collapse">
+                <hr class="m-1">
+
+                <div class="row">
+                  {% for img in project.images %}
+                  <div class="col-auto">
+                    {% set path = img.filename %}
+                    <img class="me-2 project-img-thumbnails-sm border border-2 rounded-2 delete-hover"
+                      src="{{ url_for('static', filename=user_img_dir+path) }}" data-bs-toggle="modal"
+                      data-bs-target="#imageModalFor{{ project.id }}">
+                  </div>
+                  {% endfor %}
+                </div>
+
+
+
+              </div>
+
+            </section>
+
+            <!-- UPDATES -->
+            <section class="updates-section mb-1 px-2  proj-section-med-size">
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#updates-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Updates
+                </button>
+
+              </div>
+
+              <div id="updates-area{{ project.id }}" class="updates-area px-3 py-2 accordion-collapse collapse">
+                <hr class="m-1 ">
+                {% for update in project.updates|sort(attribute='datetime', reverse=True) %}
+                <br>
+                <em class="text-muted">{{ wkd_mon_dd_yyy_local(update.datetime) }}</em>
+                <br>
+                <span>{{ update.column }} {{ update.message }}</span>
+                <br>
+
+                {% endfor %}
+              </div>
+            </section>
+
+          </div>
+
+          {% endfor %}
+
+
+
+          {% for project in deleted_projects|sort(attribute='date_updated', reverse=True) %}
+
+          <div class="project-container rounded-2 p-3 my-3 d-none" style="background-color: {{ project.color }};"
+            id="project{{ project.id }}">
+
+            <!-- TITLE/LABEL section -->
+            <section class="title-label-section mb-1 p-2 position-relative">
+
+              <div class="d-flex flex-row-reverse">
+                <h6><em class="text-muted fw-light">Project Deleted</em></h6>
+              </div>
+
+              <h3 class="title display-6 text-muted proj-card-title fw-light">
+                {{ project.title }}
+              </h3>
+              <div class="d-inline-flex">
+
+                {% for label in labels %}
+
+                {% if label in project.labels %}
+
+                {% set path = label.icon %}
+
+                <div class="col-auto m-auto">
+                  <div class="card px-2 w-auto opacity-75 mx-1" id="label{{ label.id }}"
+                    style="background-color: {{ label.color }};">
+                    <div class="pt-1 d-inline-flex text-center">
+                      <img class="mb-1" src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                      <h6 class="px-1">{{ label.name }}</h6>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+
+              </div>
+              <br>
+
+              <div class="d-inline-flex">
+
+                <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST"
+                  role="form">
+
+                  <input type="text" name="putBack" value="true" hidden>
+
+                  <button type="submit" class="btn bordder-0 bg-transparent text-muted m-2">Click here to put back into
+                    'Active Projects'</button>
+                </form>
+
+
+
+
+              </div>
+
+
+            </section>
+            <!-- OVERVIEW -->
+            <section class="overview-section mb-1 px-2 position-relative proj-section-med-size">
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#overview-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5 accordion-header">
+                  Overview
+                </button>
+              </div>
+
+              <div id="overview-area{{ project.id }}" class="overview-area px-3 py-2 accordion-collapse collapse">
+
+                <hr class="m-1 ">
+                {% if ((project.due_date) or (project.priority) or (project.last_session) or (project.goal_time)) %}
+                {% else %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#overview{{ project.id }}modal"
+                  id="overview{{ project.id }}editbtn">
+                  <em class="text-muted"> + project details</em>
+                </button>
+
+                {% endif %}
+
+
+                {% if project.due_date%}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">due-date</p>
+                  <p class="ms-auto p-0 m-0 ">{{ weekday_month_dd_yyy_local(project.due_date) }}</p>
+                </div>
+                {% endif %}
+
+                {% if project.priority %}
+                {% if project.priority != "None" %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto m-0 p-0 me-3">priority</p>
+                  <p class="ms-auto m-0 ps-3 ms-3">{{ project.priority }}</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+
+
+
+                {% if project.goal_time %}
+                <div class="temp-color mb-1 d-inline-flex justify-between w-100 rounded-2 px-2 py-0 m-0">
+                  <p class="me-auto p-0 m-0">productivity goal</p>
+                  <p class="ms-auto p-0 m-0">
+
+                    {% set gt_seconds = convert_time(project.goal_time)[0] %}
+                    {% set gt_minutes = convert_time(project.goal_time)[1] %}
+                    {% set gt_hours = convert_time(project.goal_time)[2] %}
+
+                    <span id="goalToHit{{ project.id }}" class="d-inline-flex">
+                      {% if gt_hours %}
+                      {% if gt_hours >= 0  %}
+                      <p class="goal p-0 m-0">{{gt_hours}}:</p>
+                      {% endif %}
+                      {% endif %}
+
+                      {% if gt_minutes %}
+                      {% if gt_minutes == 0  %}
+                      <p class="goal p-0 m-0">00:00</p>
+                      {% elif gt_minutes < 10 %}
+
+                      <p class="goal p-0 m-0">0{{gt_minutes}}:00</p>
+                      {% else %}
+                      <p class="goal p-0 m-0">{{gt_minutes}}:00</p>
+                      {% endif %}
+                      {% else %}
+                      <p class="goal p-0 m-0">00:00</p>
+                      {% endif %}
+                    </span>
+                    / {{ project.goal_per }}</p>
+                </div>
+
+
+
+
+                {% endif %}
+              </div>
+            </section>
+
+            <!-- DESCRIPTION -->
+            <section class="description-section mb-1 px-2 position-relative  proj-section-med-size">
+
+              <div id="description-area{{ project.id }}" class="description-area px-3 py-2 accordion-collapse collapse">
+                <hr class="m-1 ">
+
+                {% if project.description %}
+
+
+                {{ project.description }}
+
+                {% else %}
+
+                <button type="button" class="text-center p-0 border-0 bg-transparent text-nowrap plus-item-btn"
+                  data-bs-toggle="modal" data-bs-target="#description{{ project.id }}modal"
+                  id="description{{ project.id }}editbtn">
+                  <em class="text-muted"> + project description</em>
+                </button>
+
+
+
+                {% endif %}
+              </div>
+
+
+            </section>
+
+            <!-- TASKS -->
+            <section class="tasks-section mb-1 px-2 position-relative  proj-section-med-size">
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#task-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Tasks
+                </button>
+              </div>
+
+              <div id="task-area{{ project.id }}" class="tasks-area px-3 accordion-collapse collapse pb-1">
+                <hr class="m-1 ">
+
+                <ul class="m-0 p-0">
+
+                  {% if project.tasks|count == 0  %}
+                  {% else %}
+                  <li class="m-0 p-0 my-3">
+                    <div class="d-inline-flex">
+
+                      <div class="mx-1">
+                        <label for="tasks{{ project.id }}sortby" class="text-nowrap text-muted">Sort By: </label>
+                        <br>
+                        <select id="tasks{{ project.id }}sortby" class="form-select form-select-sm mx-1"
+                          aria-label="sort by">
+                          <option value="1">Priority</option>
+                          <option value="2">Due Date</option>
+                          <option value="3">Date Added</option>
+                          <option value="4" seclected>Date Updated</option>
+                        </select>
+
+                      </div>
+
+                      <div class="mx-1">
+                        <label for="tasks{{ project.id }}sortby" class="text-nowrap text-muted">Show: </label>
+                        <br>
+                        <select class="form-select form-select-sm mx-1" aria-label="show">
+                          <option value="0">Active</option>
+                          <option value="1">Deleted</option>
+                          <option value="2">Completed</option>
+
+                        </select>
+                      </div>
+
+                    </div>
+                  </li>
+
+                  {% endif %}
+
+                  {% for task in project.tasks|sort(attribute='date_added', reverse=True) %}
+                  {% if ((task.complete == False) and (task.deleted == False)) %}
+                  <li>
+                    <div class="form-check position-relative">
+                      <form id="markAsComplete-task{{ task.id }}"
+                        action="{{ url_for('tasks.complete_task', task_id=task.id) }}" method="POST">
+
+                        <input class="form-check-input" type="checkbox" id="taskCheck{{ task.id }}"
+                          onchange="this.form.submit()">
+
+
+                        <label class="form-check-label" for="taskCheck{{ task.id }}">
+                          {{ task.title }}
+                        </label>
+                      </form>
+
+                      {% if task.due_date %}
+
+                      <div class="vr mx-2"></div>
+                      {% set x_local =  yyyy_mm_dd_hh_mm_ss_zz_local(task.due_date) %}
+                      <!-- find out if there is a time set -->
+                      {% set x =  yyyy_mm_dd_hh_mm_ss_zz(task.due_date) %}
+                      {% set h1,h2,m1,m2,s1,s2 = x[-8]|int, x[-7]|int, x[-5]|int, x[-4]|int, x[-2]|int, x[-1]|int  %}
+
+                      <!-- if there is no time specified -->
+                      {% if ((h1 + h2 + m1 + m2 + s1 + s2) < 1 )  %}
+
+                      {{ x_local[0:8] }}
+
+                      <!-- if there is a time specified -->
+                      {% else %}
+
+                      {{ x_local }}
+
+                      {% endif %}
+
+                      {% endif %}
+                      {% if task.priority %}
+                      <div class="vr mx-2"></div>
+                      {{ task.priority }}
+                      <div class="vr"></div>
+                      {% endif %}
+                      <button type="button" class="sm text-center p-0 position-absolute end-0 border-0 bg-transparent"
+                        data-bs-toggle="modal" data-bs-target="#task{{ task.id }}modal"
+                        id="task{{ project.id }}editbtn">
+                        •••
+                      </button>
+                    </div>
+
+                    {% if task.description %}
+
+                    <p class="text-truncate task-description ps-2" onclick="removeTruncate(this)"
+                      onblur="addTruncate(this)">
+                      {{ task.description }}</p>
+
+                    {% endif %}
+                    <hr>
+                  </li>
+
+                  {% endif %}
+                  {% endfor %}
+                </ul>
+              </div>
+            </section>
+
+            <!-- ATTACHMENTS -->
+            <section class="attachments-section mb-1 px-2 position-relative pb-1 proj-section-med-size">
+
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#attachments-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Attachments
+                </button>
+
+              </div>
+
+              <div id="attachments-area{{ project.id }}" class="attachments-area px-3 accordion-collapse collapse">
+                <hr class="m-1">
+
+                <div class="row">
+                  {% for img in project.images %}
+                  <div class="col-auto">
+                    {% set path = img.filename %}
+                    <img class="me-2 project-img-thumbnails-sm border border-2 rounded-2 delete-hover"
+                      src="{{ url_for('static', filename=user_img_dir+path) }}" data-bs-toggle="modal"
+                      data-bs-target="#imageModalFor{{ project.id }}">
+                  </div>
+                  {% endfor %}
+                </div>
+
+
+
+              </div>
+
+            </section>
+
+            <!-- UPDATES -->
+            <section class="updates-section mb-1 px-2  proj-section-med-size">
+              <div>
+                <button data-bs-toggle="collapse" data-bs-target="#updates-area{{ project.id }}" type="button"
+                  class="text-muted border-0 bg-transparent pe-5">
+                  Updates
+                </button>
+
+              </div>
+
+              <div id="updates-area{{ project.id }}" class="updates-area px-3 py-2 accordion-collapse collapse">
+                <hr class="m-1 ">
+                {% for update in project.updates|sort(attribute='datetime', reverse=True) %}
+                <br>
+                <em class="text-muted">{{ wkd_mon_dd_yyy_local(update.datetime) }}</em>
+                <br>
+                <span>{{ update.column }} {{ update.message }}</span>
+                <br>
+
+                {% endfor %}
+              </div>
+            </section>
+
+          </div>
+
+          {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+
+
+
+
+
+      <div id="resizeProjList" class="d-none d-lg-inline col-lg-4 col-xl-3 col-xxl-3 p-0 m-0">
+        <div class="ps-1">
+
+
+          <!-- Projects List -->
+          {% if projects|count == 0 %}
+
+
+          {% else %}
+
+          <div class="d-flex flex-row-reverse mx-3 my-2">
+            <button type="button" data-bs-toggle="modal" data-bs-target="#newprojectmodal"
+              class="btn btn-sm btn-outline-info"><i class="fa-solid fa-plus"></i> New Project</button>
+          </div>
+
+          <!-- Sort By -->
+          <div class="ms-2">
+            <label for="sortBy" class="text-muted p-0 m-0 "><em>Sort by...</em></label>
+            <form id="homePageSortForm" action="{{ url_for('main.home') }}" method="POST">
+              <select id="sortBy" name="sortBy" class="form-select form-select-sm w-auto" aria-label="Sort by..."
+                onchange="form.submit()" {{ authorized }}>
+
+                <option selected disabled value="{{ sortBy }}">{{ sortBy }}</option>
+                <option value="date_updated_new">Date
+                  Updated(newest)</option>
+                <option value="date_updated_old">Date
+                  Updated(oldest)</option>
+                <option value="date_added_new">Date
+                  Added(newest)</option>
+                <option value="date_added_old">
+                  Date Added(oldest)</option>
+                <option value="az">A-Z</option>
+                <!-- <option value="labels">Labels</option>
+                <option value="priority">Priority
+                </option> -->
+               <!--  <option value="due_date">Due Date
+                </option> -->
+              </select>
+            </form>
+          </div>
+          <hr class="ms-2">
+
+
+
+          <div class="dispplay-6 text-muted mx-2">Active</div>
+
+
+
+
+          {% for project in projects %}
+
+
+          {% if ((project.complete == False) and (project.deleted == False)) %}
+
+          <!--           <div class="border me-auto">{{ wkd_mon_dd_yyy_local(project.date_updated) }}</div> -->
+          <button value="big" id="proj-{{ project.id }}thumnbnail"
+            class="mx-auto rounded rounded-2 panel-project project-list-item rounded-start text-wrap h2 fw-light w-100"
+            onclick="setActive('{{ project.id }}', this), resizeProj(this)"
+            style="cursor: pointer; border: 2px solid {{ project.color }};">
+
+            <div class="proj-list-small">
+              <div class="text-center text-wrap text-break">{{ project.title }}</div>
+            </div>
+
+            <div class="proj-list-large d-none">
+              <div class="text-center text-wrap text-break display-6">{{ project.title }}</div>
+            </div>
+          </button>
+
+          {% endif %}
+          {% endfor %}
+
+          {% for project in projects %}
+          {% if ((project.complete == True) and (project.deleted == False))  %}
+
+
+
+
+
+
+          <hr class="ms-2">
+          <div class="dispplay-6 text-muted m-2">Completed</div>
+
+
+
+          <div id="proj-{{ project.id }}thumnbnail"
+            class="ms-4 me-3 rounded rounded-2 panel-project rounded-start text-wrap h2 fw-light opacity-75"
+            onclick="setActive('{{ project.id }}', this)"
+            style="cursor: pointer; border: 2px solid {{ project.color }};">
+            <div class="text-center text-wrap text-break fw-normal text-muted">{{ project.title }}</div>
+          </div>
+
+          {% endif %}
+          {% endfor %}
+
+          {% for project in projects %}
+          {% if (project.deleted == True)  %}
+
+          <hr class="ms-2">
+          <div class="dispplay-6 text-muted m-2">Deleted</div>
+
+
+
+
+          <div id="proj-{{ project.id }}thumnbnail"
+            class="ms-4 me-3 rounded rounded-2 panel-project rounded-start text-wrap h2 fw-light border border-2"
+            onclick="setActive('{{ project.id }}', this)" style="cursor: pointer;">
+            <div class="text-center text-wrap text-break text-muted fw-light">{{ project.title }}</div>
+          </div>
+
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function previewImage(elem) {
+    var uploadedImg = elem.nextElementSibling
+    const [file] = elem.files
+    if (file) {
+      uploadedImg.src = URL.createObjectURL(file)
+      uploadedImg.classList.add("border")
+      uploadedImg.classList.add("border-2")
+      uploadedImg.classList.add("rounded-2")
+    }
+  }
+
+  const toDoDiv = document.getElementById("toDoDiv")
+  var notesDiv = document.getElementById("notesDiv")
+  notesDiv.style.offsetHeight += toDoDiv.offsetHeight
+</script>
+
+
+{% endblock content %}

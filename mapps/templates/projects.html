@@ -1,0 +1,819 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="display-1 text-center">Projects</h1>
+
+
+
+<div class="card m-2 bg-light timer-card">
+    {% for project in projects %}
+    {% if project.deleted != true %}
+
+    {% if ((project.goal_time) and (project.goal_per)) %}
+    {% if project.goal_time %}
+
+    {% set projSessions = project.sessions %}
+    {% set total_seconds = project.sessions | sum(attribute='seconds') %}
+    {% set seconds_remaining = project.goal_time - total_seconds %}
+    {% set elapsed_seconds = convert_time(project.last_session)[0] %}
+    {% set elapsed_minutes = convert_time(project.last_session)[1] %}
+    {% set elapsed_hours = convert_time(project.last_session)[2] %}
+
+
+
+    <div class="card-header border-0 bg-transparent d-inline-flex">
+        <div class="me-auto">
+            <p class="text-muted h5">{{ project.title }}</p>
+        </div>
+        <div class="ms-auto">
+            <button type=button class="sm">
+                ^
+            </button>
+            <button type=button class="sm text-nowrap text-center p-0">
+                <small>•••</small>
+            </button>
+            <button type=button class="sm">
+                -
+            </button>
+        </div>
+    </div>
+    <div class="card-body mx-2 bg-success rounded-2 text-center position-relative">
+        <!-- Update Project Timer  -->
+        {% if project.goal_time %}
+        <form id="timer-form{{ project.id }}" action="{{ url_for('projects.update_project', project_id=project.id) }}"
+            method="POST" role="form">
+            <div class="d-inline-flex">
+                <!-- Last Session -->
+                <div>
+                    <div name="last-session" id="time{{ project.id }}">
+                        {% if project.last_session == None %}
+                        <p class="timer">00:00:00</p>
+                        {% else %}
+
+                        {% if project.last_session %}
+
+                        {% if total_seconds == 0 %}
+                        {% set ls_seconds = 0 %}
+                        {% set ls_minutes = 0 %}
+                        {% set ls_hours = 0 %}
+
+                        {% elif total_seconds < 10 %}
+                        {% set ls_seconds = convert_time(total_seconds)[0] %}
+                        {% set ls_minutes = 0 %}
+                        {% set ls_hours = 0 %}
+
+                        {% elif total_seconds < 100 %}
+                        {% set ls_seconds = convert_time(total_seconds)[0] %}
+                        {% set ls_minutes = convert_time(total_seconds)[1] %}
+                        {% set ls_hours = 0 %}
+
+                        {% else %}
+                        {% set ls_seconds = convert_time(total_seconds)[0] %}
+                        {% set ls_minutes = convert_time(total_seconds)[1] %}
+                        {% set ls_hours = convert_time(total_seconds)[2] %}
+
+                        {% endif %}
+
+                        <div class="d-inline-flex">
+                            {% if ls_hours == 0 %}
+                            <p class="timer">00</p>
+                            {% elif ls_hours < 10 %}
+                            <p class="timer">0{{ ls_hours }}</p>
+                            {% else %}
+                            <p class="timer">{{ ls_hours }}</p>
+                            {% endif %}
+
+                            <p class="timer">:</p>
+
+                            {% if ls_minutes == 0 %}
+                            <p class="timer">00</p>
+                            {% elif ls_minutes < 10 %}
+                            <p class="timer">0{{ ls_minutes }}</p>
+                            {% else %}
+                            <p class="timer">{{ ls_minutes }}</p>
+                            {% endif %}
+
+                            <p class="timer">:</p>
+
+                            {% if ls_seconds == 0 %}
+                            <p class="timer">00</p>
+                            {% elif ls_seconds < 10 %}
+                            <p class="timer">0{{ ls_seconds }}</p>
+                            {% else %}
+                            <p class="timer">{{ ls_seconds }}</p>
+                            {% endif %}
+                        </div>
+
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    <textarea name="last-session" id="last-session-temp{{ project.id }}" hidden></textarea>
+                    <textarea id="hidden-value{{ project.id }}" hidden></textarea>
+                </div>
+
+            </div>
+
+
+            <!-- START/ STOP timer btns -->
+            <div id="controls " class="position-absolute top-100 start-50 translate-middle">
+                <button class="lg text-nowrap" id="start{{ project.id }}"
+                    onclick="startTimer('{{ project.id }}','{{ total_seconds }}')" type="button">Start</button>
+
+                <button class="lg text-nowrap d-none" id="stop{{ project.id }}" type="button">Stop</button>
+            </div>
+        </form>
+    </div>
+
+    <div>
+        <div id="fromGoal{{ project.id }}" class="d-inline-flex d-none">
+
+            {% if ((seconds_remaining <= 0) and (project.goal_time > 0)) %}
+            <h5>Goal Achieved</h5>
+            {% else %}
+            <input type="number" value="{{ project.last_session }}" id="totalSeconds{{ project.id }}" hidden>
+
+            {% if elapsed_hours %}
+            {% if ((elapsed_hours == 0) or (elapsed_hours == None))  %}
+            {% else %}
+            <p class="timer">{{elapsed_hours}}</p>
+            {% endif %}
+            <br>
+            {% endif %}
+
+            {% if elapsed_minutes %}
+            {% if ((elapsed_minutes == 0) and (elapsed_minutes == 0))  %}
+            {% elif elapsed_minutes < 10 %}
+            <p class="timer">:0{{elapsed_minutes}}</p>
+            {% else %}
+            <p class="timer"> :{{elapsed_minutes}}</p>
+            {% endif %}
+            <br>
+            {% endif %}
+
+            {% if elapsed_seconds %}
+            {% if ((elapsed_seconds == 0) and (elapsed_seconds == 0))  %}
+            {% elif elapsed_seconds < 10 %}
+            <p class="timer">:0{{elapsed_seconds}} </p>
+            {% else %}
+            <p class="timer"> :{{elapsed_seconds}}</p>
+            {% endif %}
+            {% endif %}
+            {% endif %}
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <!-- ^^ Elapsed time -->
+
+    <div class="row">
+        <div class="col-6 text-center">
+
+            <!-- GOAL TIME -->
+            <div>
+                {% set gt_seconds = convert_time(project.goal_time)[0] %}
+                {% set gt_minutes = convert_time(project.goal_time)[1] %}
+                {% set gt_hours = convert_time(project.goal_time)[2] %}
+
+                <p class="text-muted h6 p-0 m-0 mt-1">goal</p>
+
+                <div id="goalToHit{{ project.id }}" class="d-inline-flex">
+                    {% if gt_hours %}
+                    {% if gt_hours >= 0  %}
+                    <p class="goal">{{gt_hours}}:</p>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if gt_minutes %}
+                    {% if gt_minutes == 0  %}
+                    <p class="goal">00:00</p>
+                    {% elif gt_minutes < 10 %}
+
+                    <p class="goal">0{{gt_minutes}}:00</p>
+                    {% else %}
+                    <p class="goal">{{gt_minutes}}:00</p>
+                    {% endif %}
+                    {% else %}
+                    <p class="goal">00:00</p>
+                    {% endif %}
+                </div>
+
+                <p class="text-muted h6 p-0 m-0">/{{ project.goal_per }}</p>
+            </div>
+        </div>
+
+        <div class="col">
+
+        </div>
+    </div>
+
+    {% endif %}
+    
+    {% endif %}
+    {% endfor %}
+</div>
+
+
+
+
+
+<!-- Sessions -->
+
+<!-- 
+            <div class="mt-5">
+
+                { for session in project.sessions|sort(attribute='date', reverse=True)|unique %}
+
+                { for i in sessions_dates %}
+                { if yyyy_mm_dd(i) == yyyy_mm_dd(session.date) %}
+
+                <p>here</p>
+
+                { yyyy_mm_dd(session.date) }}
+
+                { endif %}
+
+                { endfor %}
+
+                { endfor %}
+            </div> -->
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+
+
+
+
+
+
+
+{% for project in projects %}
+
+<div class="card p-5">
+    <!-- TIMER -->
+    <div class="card-header bg-danger">
+        <div>
+            <div>
+                <div>
+                    {% if ((project.goal_time) and (project.goal_per)) %}
+                    <!--  if ((project.goal_time) and (project.goal_per))  -->
+                    {% if project.goal_time %}
+                    <!-- if project.goal_time -->
+
+
+
+                    {% set projSessions = project.sessions %}
+
+
+                    <!-- Total Seconds -->
+                    {% set total_seconds = project.sessions | sum(attribute='seconds') %}
+                    <!-- Seconds remaining -->
+                    {% set seconds_remaining = project.goal_time - total_seconds %}
+
+                    <!-- Remaining seconds -->
+                    {% set elapsed_seconds = convert_time(project.last_session)[0] %}
+                    {% set elapsed_minutes = convert_time(project.last_session)[1] %}
+                    {% set elapsed_hours = convert_time(project.last_session)[2] %}
+
+
+
+
+
+                    <!--       <div id="fromGoal{{ project.id }}" class="d-inline-flex">
+
+                        {% if ((seconds_remaining <= 0) and (project.goal_time > 0)) %}
+                        <h5>Goal Achieved</h5>
+                        {% else %}
+                        <input type="number" value="{{ project.last_session }}" id="totalSeconds{{ project.id }}"
+                            hidden>
+                        {% if elapsed_hours %}
+                        {% if ((elapsed_hours == 0) or (elapsed_hours == None))  %}
+                        {% else %}
+                        <span>{{elapsed_hours}}</span>
+                        {% endif %}
+                        <br>
+                        {% endif %}
+
+                        {% if elapsed_minutes %}
+                        {% if ((elapsed_minutes == 0) and (elapsed_minutes == 0))  %}
+                        {% elif elapsed_minutes < 10 %}
+                        <span><small><em>:</em></small>0{{elapsed_minutes}}</span>
+                        {% else %}
+                        <span> <small><em>:</em></small>{{elapsed_minutes}}</span>
+                        {% endif %}
+                        <br>
+                        {% endif %}
+
+                       {% if elapsed_seconds %}
+                        {% if ((elapsed_seconds == 0) and (elapsed_seconds == 0))  %}
+                        {% elif elapsed_seconds < 10 %}
+                        <span><small><em>:</em></small>0{{elapsed_seconds}} </span>
+                        {% else %}
+                        <span> <small><em>:</em></small>{{elapsed_seconds}}</span>
+                        {% endif %}
+                        {% endif %}
+                        {% endif %}
+                        {% endif %}
+                        {% endif %}
+
+                    </div> -->
+                </div>
+
+                <!-- ^^ Elapsed time -->
+
+
+
+
+
+
+
+
+
+                <!-- Update Project Timer  -->
+                {% if project.goal_time %}
+
+
+
+                <form id="timer-form{{ project.id }}"
+                    action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+
+
+                    <!-- START/ STOP timer btns -->
+                    <div id="controls">
+                        <button class="mx-1 btn btn-primary" id="start{{ project.id }}"
+                            onclick="startTimer('{{ project.id }}','{{ total_seconds }}')" type="button">Start</button>
+
+                        <button class="mx-1 btn btn-info d-none" id="stop{{ project.id }}" type="button">Stop</button>
+                    </div>
+
+
+
+                    <div class="d-inline-flex">
+                        <!-- Last Session -->
+                        <div>
+                            <div name="last-session" id="time{{ project.id }}">
+                                {% if project.last_session == None %}
+                                00:00:00
+                                {% else %}
+
+                                {% if project.last_session %}
+
+                                {% if total_seconds == 0 %}
+                                {% set ls_seconds = 0 %}
+                                {% set ls_minutes = 0 %}
+                                {% set ls_hours = 0 %}
+
+                                {% elif total_seconds < 10 %}
+                                {% set ls_seconds = convert_time(total_seconds)[0] %}
+                                {% set ls_minutes = 0 %}
+                                {% set ls_hours = 0 %}
+
+
+
+                                {% elif total_seconds < 100 %}
+                                {% set ls_seconds = convert_time(total_seconds)[0] %}
+                                {% set ls_minutes = convert_time(total_seconds)[1] %}
+                                {% set ls_hours = 0 %}
+
+
+                                {% else %}
+                                {% set ls_seconds = convert_time(total_seconds)[0] %}
+                                {% set ls_minutes = convert_time(total_seconds)[1] %}
+                                {% set ls_hours = convert_time(total_seconds)[2] %}
+
+
+                                {% endif %}
+
+
+
+                                {% if ls_hours == 0 %}
+                                <span>00</span>
+                                {% elif ls_hours < 10 %}
+                                <span>0{{ ls_hours }}</span>
+                                {% else %}
+                                <span>{{ ls_hours }}</span>
+                                {% endif %}
+                                <span>:</span>
+                                {% if ls_minutes == 0 %}
+                                <span>00</span>
+                                {% elif ls_minutes < 10 %}
+                                <span>0{{ ls_minutes }}</span>
+                                {% else %}
+                                <span>{{ ls_minutes }}</span>
+                                {% endif %}
+                                <span>:</span>
+                                {% if ls_seconds == 0 %}
+                                <span>00</span>
+                                {% elif ls_seconds < 10 %}
+                                <span>0{{ ls_seconds }}</span>
+                                {% else %}
+                                <span>{{ ls_seconds }}</span>
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            <textarea name="last-session" id="last-session-temp{{ project.id }}" hidden></textarea>
+                            <textarea id="hidden-value{{ project.id }}" hidden></textarea>
+                        </div>
+
+                    </div>
+                </form>
+
+                <p>/</p>
+
+                <!-- GOAL TIME -->
+                <div>
+                    {% set gt_seconds = convert_time(project.goal_time)[0] %}
+                    {% set gt_minutes = convert_time(project.goal_time)[1] %}
+                    {% set gt_hours = convert_time(project.goal_time)[2] %}
+
+                    <div id="goalToHit{{ project.id }}" class="d-inline-flex">
+                        {% if gt_hours %}
+                        {% if gt_hours >= 0  %}
+                        <span>{{gt_hours}}:</span>
+                        {% endif %}
+                        {% endif %}
+
+                        {% if gt_minutes %}
+                        {% if gt_minutes == 0  %}
+                        <span>00<small><em>:</em></small>00</span>
+                        {% elif gt_minutes < 10 %}
+
+                        <span>0{{gt_minutes}}<small><em>:</em></small>00</span>
+                        {% else %}
+                        <span>{{gt_minutes}}<small><em>:</em></small>00</span>
+                        {% endif %}
+                        {% else %}
+                        <span>00<small><em>:</em></small>00</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+
+
+
+
+                {% endif %}
+
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<form action="{{ url_for('projects.add_project') }}" method="POST" class="mt-5">
+    <div class="mb-3">
+        <label for="new-project" class="form-label h5">New Project</label>
+        <input id="add-title" name="add-title" type="text" class="form-control"
+            placeholder="Project{{ projects|length+1 }}" value="Project{{ projects|length+1 }}">
+        <button type="submit" class="btn btn-primary">+ Project</button>
+        <input type="text" name="description">
+    </div>
+</form>
+
+<p><em>active Projects: {{ active_projects|length }}</em></p>
+
+{% if active_projects|length == 0 %}
+<h4 class="text-center mb-5"><em class="text-muted">
+        ^^^to get started, add a new project^^^
+    </em></h4>
+{% endif %}
+
+{% for project in active_projects|sort(attribute='date_updated', reverse=True) %}
+
+<div class="card my-2">
+    {% if ((project.due_date) or (project.priority)) %}
+    <div class="card-header text-muted">
+        {% if project.priority %}
+        {% if project.priority == 1 %}
+        <strong>!</strong>
+        {% endif %}
+        {% if project.priority == 2 %}
+        <strong>!!</strong>
+        {% endif %}
+        {% if project.priority == 3 %}
+        <strong>!!!</strong>
+        {% endif %}
+        {% endif %}
+        {% if project.due_date %}
+        <b>due: </b>
+        <b>{{ weekday_month_dd_yyy_local(project.due_date) }}</b>
+        {% endif %}
+
+
+    </div>
+    {% endif %}
+
+
+    <div class="card-body" id="card-body-perm{{ project.id }}">
+        <div class="d-inline-flex justify-content-between w-100">
+            <h5 class="card-title display-6"><i class="fa-solid fa-circle-check mx-2 text-muted"
+                    onclick="markAsComplete('{{ project.id }}')"></i>{{ project.title }}
+            </h5>
+            <form id="markAsComplete{{ project.id }}"
+                action="{{ url_for('projects.complete_project', project_id=project.id) }}" methods="POST" role="form">
+            </form>
+            <div class="row">
+
+                {% for label in labels %}
+
+                {% set path = label.icon %}
+
+                <div class="col-auto">
+                    <div class="card px-3 mx-5 w-auto" id="label{{ label.id }}" onclick="addLabel('{{ label.id }}')"
+                        style="background-color: {{ label.color }}; cursor: pointer;">
+                        <div class="pt-1 d-inline-flex text-center">
+                            <img src="{{ url_for('static', filename=folder_dir+path) }}" width="20" height="20">
+                            <h6 class="px-1">{{ label.name }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
+
+            <div class="btn-group">
+                <button id="edit-project-item{{ project.id }}" class="border-0 bg-transparent mx-1"><i
+                        class="fa-solid fa-square-pen fa-2xl text-muted"
+                        onclick="editprojectItem('{{ project.id }}')"></i></button>
+                <button type="button" data-bs-toggle="modal" data-bs-target="#delete-project{{ project.id }}"
+                    id="delete-project-item{{ project.id }}" class="border-0 bg-transparent mx-1"><i
+                        class="fa-solid fa-trash fa-2xl text-muted"></i></button>
+            </div>
+        </div>
+        {% if project.description %}
+        <p class="card-text ms-5">{{ project.description }}</p>
+        {% endif %}
+
+
+
+    </div>
+
+    <div class="card-body d-none" id="card-body-edit{{ project.id }}">
+        <form action="{{ url_for('projects.update_project', project_id=project.id) }}" method="POST" role="form">
+            <div>
+                <input name="new_title" class="card-title display-6 w-100" placeholder="{{ project.title }}">
+                </input>
+
+                <textarea placeholder="Enter a description.." name="description" class="form-control"
+                    id="adddescription{{ project.id }}" rows="3"></textarea>
+
+                <div class="my-2">
+                    <label for="add-due-date{{ project.id }}">Add a due date</label>
+                    <br>
+                    <input class="form-control form-control-lg" id="add-due-date{{ project.id }}" type="date"
+                        name="due_date">
+                    <input name="no_due_date" type="checkbox" class="form-check-input" id="noDueDate">
+                    <label class="form-check-label" for="noDueDate">No Due Date</label>
+                </div>
+                <br>
+
+                <div>
+                    <h6>Priority:</h6>
+                    <div class="form-check">
+                        <input value="0" class="form-check-input" type="radio" name="priority" id="priority-low">
+                        <label class="form-check-label" for="priority-none">
+                            None
+                        </label>
+                    </div>
+                    <div class="form-check">
+
+
+                        <input value="1" class="form-check-input" type="radio" name="priority" id="priority-low">
+                        <label class="form-check-label" for="priority-low">
+                            !
+                        </label>
+
+                    </div>
+                    <div class="form-check">
+                        <input value="2" class="form-check-input" type="radio" name="priority" id="priority-medium">
+                        <label class="form-check-label" for="priority-medium">
+                            !!
+                        </label>
+
+                    </div>
+                    <div class="form-check">
+                        <input value="3" class="form-check-input" type="radio" name="priority" id="priority-high">
+                        <label class="form-check-label" for="priority-high">
+                            !!!
+                        </label>
+                    </div>
+                </div>
+                <br>
+                <div class="text-end">
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="reset" class="btn btn-secondary"
+                            onclick="saveprojectItem('{{ project.id }}')">Cancel</button>
+                    </div>
+
+                </div>
+            </div>
+
+
+        </form>
+
+    </div>
+
+    <div class="card-footer d-inline-flex justify-content-between">
+        <div>
+            <small><em>created: </em></small>
+            <small>{{ wkd_mon_dd_yyy_local(project.date_added) }}</small>
+            <small>{{ hh_mm_ss_am_local(project.date_added) }}</small>
+        </div>
+        <div>
+            <small><em>updated: </em></small>
+            <small>{{ wkd_mon_dd_yyy_local(project.date_updated) }}</small>
+            <small>{{ hh_mm_ss_am_local(project.date_updated) }}</small>
+
+        </div>
+
+
+
+    </div>
+</div>
+
+<form action="{{ url_for('projects.delete_project', project_id = project.id) }}" method="POST" role="form">
+    <div class="modal fade" id="delete-project{{ project.id }}" tabindex="-1"
+        aria-labelledby="delete-project{{ project.id }}Label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="delete-project{{ project.id }}Label">Are you sure you want to
+                        delete
+                        {{ project.title }} ?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+
+
+
+
+
+{% endfor %}
+
+
+
+
+
+<script>
+    function editprojectItem(project_id) {
+        let permprojectBody = document.getElementById("card-body-perm" + project_id)
+        let editprojectBody = document.getElementById("card-body-edit" + project_id)
+        if (editprojectBody.classList.contains("d-none")) {
+            editprojectBody.classList.remove("d-none")
+        }
+        if (!permprojectBody.classList.contains("d-none")) {
+            permprojectBody.classList.add("d-none")
+        }
+    }
+
+    function saveprojectItem(project_id) {
+        let permprojectBody = document.getElementById("card-body-perm" + project_id)
+        let editprojectBody = document.getElementById("card-body-edit" + project_id)
+        if (!editprojectBody.classList.contains("d-none")) {
+            editprojectBody.classList.add("d-none")
+        }
+        if (permprojectBody.classList.contains("d-none")) {
+            permprojectBody.classList.remove("d-none")
+        }
+    }
+
+    function markAsComplete(project_id) {
+        let form = document.getElementById("markAsComplete" + project_id)
+
+        form.submit()
+
+    }
+
+    function showUndoBtns(project_id) {
+        let undoBtn = document.getElementById('undo' + project_id)
+
+        if (undoBtn.classList.contains('d-none')) {
+            undoBtn.classList.remove('d-none')
+        }
+    }
+
+    function hideUndoBtns(project_id) {
+        let undoBtn = document.getElementById('undo' + project_id)
+
+        if (!undoBtn.classList.contains('d-none')) {
+            undoBtn.classList.add('d-none')
+        }
+    }
+
+    function putprojectItemBack(project_id) {
+        let form = document.getElementById("undoForm" + project_id)
+
+        form.submit()
+    }
+</script>
+
+
+
+
+{% endblock content %}

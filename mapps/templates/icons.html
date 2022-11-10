@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="display-1 text-center">Icons</h1>
+
+{% for icon in icons %}
+
+<img class="m-1" src="{{ url_for('static', filename=folder_dir+icon) }}" width="40" height="40">
+
+{% endfor %}
+
+
+
+{% endblock content %}
