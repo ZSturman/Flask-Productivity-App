@@ -74,8 +74,8 @@ def create_icons_list():
 with app.app_context():
     db.init_app(app)
     #db.drop_all()
-    db.create_all()
-    create_icons_list()
+    #db.create_all()
+    #create_icons_list()
     
     
 
