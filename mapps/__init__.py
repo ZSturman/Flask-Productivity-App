@@ -24,7 +24,7 @@ s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 bcrypt = Bcrypt(app)
 
-scss = Bundle('bootstrap-dist/css/bootstrap.css','bootstrap-dist/css/bootstrap-grid.css','bootstrap-dist/css/bootstrap-reboot.css','bootstrap-dist/css/bootstrap-utilities.css','custom.scss', filters="libsass", output='gen/all.css')
+scss = Bundle('bootstrap-dist/css/bootstrap.css','bootstrap-dist/css/bootstrap-grid.css','bootstrap-dist/css/bootstrap-reboot.css','bootstrap-dist/css/bootstrap-utilities.css','custom.scss', filters="libsass", output='all.css')
 assets = Environment(app)
 assets.register('scss_all', scss)
 
